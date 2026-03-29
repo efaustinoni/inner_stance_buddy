@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-part answers can be separated with `|` and will be displayed on individual lines in the answer field
 
 ### Fixed
+- 2026-03-29: WeekModal CSV parser was a separate, outdated implementation
+  - Only supported 6 questions (now 10)
+  - Only supported `answer_Na/Nb` sub-letter format (now supports `answer_N` directly)
+  - Did not support `label_N`, `|` separators, BOM, or `thema` header
+  - Now fully aligned with BulkImportModal CSV parsing
 - 2026-03-29: Bulk import answers were not saved after import
   - Root cause: questions inserted in batch with `.insert().select()` did not guarantee return order, causing answer-to-question ID mapping to be incorrect
   - Fix: questions are now inserted one-by-one to guarantee ID order before answers are mapped

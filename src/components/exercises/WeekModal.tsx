@@ -51,49 +51,68 @@ function parseCSVLine(line: string): string[] {
 }
 
 function parseCSV(csvText: string): { weekNumber?: number; theme?: string; questions: ParsedQuestion[] } {
-  const lines = csvText.split(/\r?\n/).filter(line => line.trim());
+  let text = csvText;
+  if (text.charCodeAt(0) === 0xFEFF) {
+    text = text.slice(1);
+  }
+
+  const lines = text.split(/\r?\n/).filter(line => line.trim());
   if (lines.length < 2) {
     return { questions: [] };
   }
 
-  const headers = parseCSVLine(lines[0]).map(h => h.toLowerCase().trim());
+  const rawHeaders = parseCSVLine(lines[0]);
+  const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/[^a-z0-9_]/g, ''));
   const dataLine = parseCSVLine(lines[1]);
 
-  const weekIdx = headers.indexOf('week');
-  const themeIdx = headers.indexOf('theme');
+  const weekIdx = headers.findIndex(h => h === 'week');
+  const themeIdx = headers.findIndex(h => h === 'theme' || h === 'thema');
 
   const weekNumber = weekIdx !== -1 && dataLine[weekIdx] ? parseInt(dataLine[weekIdx], 10) : undefined;
   const theme = themeIdx !== -1 && dataLine[themeIdx] ? dataLine[themeIdx] : undefined;
 
   const questions: ParsedQuestion[] = [];
 
-  for (let qNum = 1; qNum <= 6; qNum++) {
+  for (let qNum = 1; qNum <= 10; qNum++) {
     const questionKey = `question_${qNum}`;
     const questionIdx = headers.indexOf(questionKey);
 
     if (questionIdx === -1 || !dataLine[questionIdx]) continue;
 
     const questionText = dataLine[questionIdx];
-    const answers: string[] = [];
+    let answer: string | undefined;
 
-    const answerLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
-    for (const letter of answerLetters) {
-      const answerKey = `answer_${qNum}${letter}`;
-      const answerIdx = headers.indexOf(answerKey);
+    // Try direct answer_N column first (supports | for multi-line)
+    const directAnswerKey = `answer_${qNum}`;
+    const directAnswerIdx = headers.indexOf(directAnswerKey);
 
-      if (answerIdx !== -1 && dataLine[answerIdx]) {
-        answers.push(dataLine[answerIdx]);
+    if (directAnswerIdx !== -1 && dataLine[directAnswerIdx]) {
+      answer = dataLine[directAnswerIdx].split('|').map((a: string) => a.trim()).join('\n');
+    } else {
+      // Fall back to answer_Na, answer_Nb, etc.
+      const subAnswers: string[] = [];
+      const answerLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
+      for (const letter of answerLetters) {
+        const answerKey = `answer_${qNum}${letter}`;
+        const answerIdx = headers.indexOf(answerKey);
+        if (answerIdx !== -1 && dataLine[answerIdx]) {
+          subAnswers.push(dataLine[answerIdx]);
+        }
+      }
+      if (subAnswers.length > 0) {
+        answer = subAnswers.join('\n');
       }
     }
 
-    const formattedAnswer = answers.length > 0
-      ? answers.map((a, i) => `${i + 1}. ${a}`).join('\n')
-      : '';
+    // Support optional label_N column
+    const labelKey = `label_${qNum}`;
+    const labelIdx = headers.indexOf(labelKey);
+    const questionLabel = (labelIdx !== -1 && dataLine[labelIdx]) ? dataLine[labelIdx] : `Vraag ${qNum}`;
 
     questions.push({
-      label: `Vraag ${qNum}`,
+      label: questionLabel,
       text: questionText,
-      answer: formattedAnswer,
+      answer,
     });
   }
 
@@ -257,7 +276,7 @@ export function WeekModal({
                 Upload CSV File
               </label>
               <p className="text-xs text-content-muted mb-3">
-                CSV format: week, theme, question_1, answer_1a, answer_1b, ...
+                CSV format: week, theme, label_1, question_1, answer_1, ... (label_N optional; use | for multi-line answers)
               </p>
               <div
                 onClick={() => fileInputRef.current?.click()}
