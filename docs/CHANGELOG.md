@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-03-29: CSV import now supports optional `label_N` columns for proper sub-question labels (e.g. `1a`, `1b`, `2a`)
+  - If `label_N` is omitted the parser falls back to `Vraag N` (fully backward compatible)
+  - Updated CSV format hint in the Bulk Import modal to document `label_N` and `|` separator usage
+  - Multi-part answers can be separated with `|` and will be displayed on individual lines in the answer field
+
+### Fixed
+- 2026-03-29: Bulk import answers were not saved after import
+  - Root cause: questions inserted in batch with `.insert().select()` did not guarantee return order, causing answer-to-question ID mapping to be incorrect
+  - Fix: questions are now inserted one-by-one to guarantee ID order before answers are mapped
+  - Answer insert failures now return `false` and propagate correctly instead of being silently ignored
+
 - 2026-02-13: Security question management in profile page
   - Users can now update their security question and answer from their profile
   - Requires verification of current answer before allowing changes

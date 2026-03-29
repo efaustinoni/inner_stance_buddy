@@ -174,8 +174,12 @@ function parseCSV(csvText: string): BulkImportData {
       }
     }
 
+    const labelKey = `label_${qNum}`;
+    const labelIdx = headers.indexOf(labelKey);
+    const questionLabel = (labelIdx !== -1 && dataLine[labelIdx]) ? dataLine[labelIdx] : `Vraag ${qNum}`;
+
     questions.push({
-      label: `Vraag ${qNum}`,
+      label: questionLabel,
       text: questionText,
       answer,
     });
@@ -319,7 +323,7 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                 Upload CSV File
               </label>
               <p className="text-xs text-content-muted mb-3">
-                CSV format: week, theme, question_1, answer_1, question_2, answer_2, ...
+                CSV format: week, theme, label_1, question_1, answer_1, label_2, question_2, answer_2, ... (label_N is optional; use | to separate multi-line answers)
               </p>
               <div
                 onClick={() => fileInputRef.current?.click()}

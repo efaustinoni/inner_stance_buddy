@@ -307,21 +307,26 @@ export async function bulkImportQuestions(
     }
   }
 
-  const questionsToInsert = questions.map((q, index) => ({
-    week_id: weekId,
-    question_label: q.label,
-    question_text: q.text,
-    sort_order: index
-  }));
+  // Insert questions one by one to guarantee order and get reliable IDs
+  const insertedQuestions: ExerciseQuestion[] = [];
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const { data: inserted, error: qError } = await supabase
+      .from('exercise_questions')
+      .insert({
+        week_id: weekId,
+        question_label: q.label,
+        question_text: q.text,
+        sort_order: i
+      })
+      .select()
+      .single();
 
-  const { data: insertedQuestions, error } = await supabase
-    .from('exercise_questions')
-    .insert(questionsToInsert)
-    .select();
-
-  if (error || !insertedQuestions) {
-    console.error('Error bulk importing questions:', error);
-    return false;
+    if (qError || !inserted) {
+      console.error(`[BulkImport] Error inserting question ${i + 1}:`, qError);
+      return false;
+    }
+    insertedQuestions.push(inserted);
   }
 
   console.log(`[BulkImport] Inserted ${insertedQuestions.length} questions`);
@@ -345,10 +350,10 @@ export async function bulkImportQuestions(
       .insert(answersToInsert);
 
     if (answerError) {
-      console.error('Error inserting answers:', answerError);
-    } else {
-      console.log(`[BulkImport] Inserted ${answersToInsert.length} answers`);
+      console.error('[BulkImport] Error inserting answers:', answerError);
+      return false;
     }
+    console.log(`[BulkImport] Inserted ${answersToInsert.length} answers`);
   } else {
     console.log('[BulkImport] No answers to insert');
   }
