@@ -277,6 +277,7 @@ function App() {
       <DashboardLayout
         userName={userName}
         onNavigate={navigate}
+        onSignOut={handleSignOut}
       >
         {progressMatch && trackerId ? (
           <ProgressTrackingPage trackerId={trackerId} onNavigate={navigate} />

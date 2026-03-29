@@ -1,19 +1,21 @@
 // Created: 2026-02-13
 // Last Updated: 2026-02-13 15:35
 
-import { BookOpen } from 'lucide-react';
+import { BookOpen, LogOut } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
 
 interface MainNavigationProps {
   userName?: string;
   userAvatar?: string | null;
   onNavigate: (path: string) => void;
+  onSignOut: () => void;
 }
 
 export function MainNavigation({
   userName,
   userAvatar,
   onNavigate,
+  onSignOut,
 }: MainNavigationProps) {
   return (
     <header className="bg-navy-900 border-b border-navy-800 sticky top-0 z-40">
@@ -31,13 +33,22 @@ export function MainNavigation({
             </span>
           </button>
 
-          <button
-            onClick={() => onNavigate('/profile')}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-navy-800 transition-colors"
-          >
-            <Avatar src={userAvatar} name={userName} size="sm" />
-            <span className="text-sm text-content-muted hidden md:block">{userName}</span>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => onNavigate('/profile')}
+              className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-navy-800 transition-colors"
+            >
+              <Avatar src={userAvatar} name={userName} size="sm" />
+              <span className="text-sm text-content-muted hidden md:block">{userName}</span>
+            </button>
+            <button
+              onClick={onSignOut}
+              title="Sign out"
+              className="p-2 text-content-muted hover:text-status-error hover:bg-navy-800 rounded-lg transition-colors"
+            >
+              <LogOut size={18} />
+            </button>
+          </div>
         </div>
       </div>
     </header>
