@@ -2,7 +2,8 @@
 // Last Updated: 2026-02-14 00:10
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Upload, Edit3, Calendar, Tag, AlertCircle } from 'lucide-react';
+import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type } from 'lucide-react';
+import { parseExerciseText } from './BulkImportModal';
 
 export interface ParsedQuestion {
   label: string;
@@ -22,7 +23,7 @@ interface WeekModalProps {
   existingWeekNumbers: number[];
 }
 
-type InputMode = 'manual' | 'csv';
+type InputMode = 'manual' | 'csv' | 'text';
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -135,6 +136,7 @@ export function WeekModal({
 
   const [csvFileName, setCsvFileName] = useState('');
   const [csvQuestions, setCsvQuestions] = useState<ParsedQuestion[]>([]);
+  const [rawText, setRawText] = useState('');
   const [parseError, setParseError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -196,7 +198,7 @@ export function WeekModal({
   const handleSave = async () => {
     if (!topic.trim()) return;
     setIsSaving(true);
-    const questionsToImport = inputMode === 'csv' && csvQuestions.length > 0 ? csvQuestions : undefined;
+    const questionsToImport = (inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 ? csvQuestions : undefined;
     await onSave(weekNumber, topic.trim(), questionsToImport);
     setIsSaving(false);
     onClose();
@@ -210,15 +212,30 @@ export function WeekModal({
     onClose();
   };
 
+  const handleTextChange = useCallback((text: string) => {
+    setRawText(text);
+    setParseError('');
+    if (!text.trim()) {
+      setCsvQuestions([]);
+      return;
+    }
+    const result = parseExerciseText(text);
+    setCsvQuestions(result.questions);
+    if (result.weekNumber) setWeekNumber(result.weekNumber);
+    if (result.theme) setTopic(result.theme);
+    if (result.questions.length === 0) {
+      setParseError('Could not parse any questions. Start each question with a label like "Vraag 1a:" or "1a."');
+    }
+  }, []);
+
   const handleModeChange = (mode: InputMode) => {
     setInputMode(mode);
-    if (mode === 'manual') {
-      setCsvFileName('');
-      setCsvQuestions([]);
-      setParseError('');
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
-      }
+    setCsvFileName('');
+    setCsvQuestions([]);
+    setRawText('');
+    setParseError('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
@@ -266,10 +283,39 @@ export function WeekModal({
               <Upload size={16} />
               Import CSV
             </button>
+            <button
+              onClick={() => handleModeChange('text')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                inputMode === 'text'
+                  ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5'
+                  : 'text-content-muted hover:text-content-inverse'
+              }`}
+            >
+              <Type size={16} />
+              Paste Text
+            </button>
           </div>
         )}
 
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
+          {inputMode === 'text' && !isEditMode && (
+            <div>
+              <label className="block text-sm font-medium text-content-muted mb-1">
+                Paste your questions below
+              </label>
+              <p className="text-xs text-content-muted mb-2">
+                Include "Week: 2" and "Thema: Non-negotiable Targets" to auto-fill week number and topic
+              </p>
+              <textarea
+                value={rawText}
+                onChange={(e) => handleTextChange(e.target.value)}
+                placeholder={`Week: 2\nThema: Non-negotiable Targets\n\nVraag 1a: Voor welk bedrijf werk je?\nAI Global Experts\n\nVraag 1b: Wat is je huidige functie?\nOndernemer / Founder`}
+                rows={8}
+                className="w-full px-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-content-inverse placeholder-content-muted focus:outline-none focus:border-accent-blue resize-y text-sm font-mono"
+              />
+            </div>
+          )}
+
           {inputMode === 'csv' && !isEditMode && (
             <div>
               <label className="block text-sm font-medium text-content-muted mb-1">
@@ -302,7 +348,7 @@ export function WeekModal({
             </div>
           )}
 
-          {parseError && inputMode === 'csv' && (
+          {parseError && (inputMode === 'csv' || inputMode === 'text') && (
             <div className="flex items-start gap-2 p-3 bg-status-error/10 border border-status-error/20 rounded-lg">
               <AlertCircle size={18} className="text-status-error flex-shrink-0 mt-0.5" />
               <p className="text-sm text-status-error">{parseError}</p>
@@ -340,7 +386,7 @@ export function WeekModal({
             />
           </div>
 
-          {inputMode === 'csv' && csvQuestions.length > 0 && (
+          {(inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 && (
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
@@ -398,7 +444,7 @@ export function WeekModal({
               disabled={isSaving || !topic.trim() || weekNumberInUse}
               className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'Saving...' : isEditMode ? 'Save Changes' : inputMode === 'csv' && csvQuestions.length > 0 ? `Create Week & Import ${csvQuestions.length} Questions` : 'Create Week'}
+              {isSaving ? 'Saving...' : isEditMode ? 'Save Changes' : (inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 ? `Create Week & Import ${csvQuestions.length} Questions` : 'Create Week'}
             </button>
           </div>
         </div>

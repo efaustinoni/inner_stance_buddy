@@ -23,7 +23,7 @@ const NUMBERED_LABEL_PATTERN = /^(\d+[a-z]?)[.:]\s+(?=[A-Z])/;
 const WEEK_PATTERN = /^Week[:\s]+(\d+)/i;
 const THEME_PATTERN = /^(Theme|Thema)[:\s]+(.+)/i;
 
-function parseExerciseText(text: string): BulkImportData {
+export function parseExerciseText(text: string): BulkImportData {
   const lines = text.split('\n');
   const questions: { label: string; text: string; answer?: string }[] = [];
 
