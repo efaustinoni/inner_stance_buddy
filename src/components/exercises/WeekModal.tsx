@@ -1,10 +1,11 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02
+// Last Updated: 2026-04-02 (add From Image tab)
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type, Copy } from 'lucide-react';
+import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type, Copy, Image as ImageIcon, Loader2, ScanSearch } from 'lucide-react';
 import { parseExerciseText } from './BulkImportModal';
 import type { ExerciseQuarter } from '../../lib/exerciseService';
+import { extractQuestionsFromImage } from '../../lib/exerciseService';
 
 export interface ParsedQuestion {
   label: string;
@@ -29,7 +30,40 @@ interface WeekModalProps {
   weekNumbersInQuarter?: number[];
 }
 
-type InputMode = 'manual' | 'csv' | 'text';
+type InputMode = 'manual' | 'csv' | 'text' | 'image';
+
+/** Resize + JPEG-compress an image file, returning base64 (no data-URL prefix). */
+async function compressAndEncodeImage(file: File, maxDim = 2048, quality = 0.85): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        resolve({ base64: dataUrl.split(',')[1], mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = e.target!.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 function parseCSVLine(line: string): string[] {
   const result: string[] = [];
@@ -156,6 +190,12 @@ export function WeekModal({
   const [parseError, setParseError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // Image-mode state
+  const [imageFileName, setImageFileName] = useState('');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     if (isOpen) {
       if (initialData) {
@@ -219,7 +259,7 @@ export function WeekModal({
   const handleSave = async () => {
     if (!topic.trim()) return;
     setIsSaving(true);
-    const questionsToImport = (inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 ? csvQuestions : undefined;
+    const questionsToImport = (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0 ? csvQuestions : undefined;
     await onSave(weekNumber, topic.trim(), selectedQuarterId, questionsToImport);
     setIsSaving(false);
     onClose();
@@ -258,15 +298,49 @@ export function WeekModal({
     }
   }, []);
 
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImageFileName(file.name);
+    setParseError('');
+    setCsvQuestions([]);
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+
+    setIsExtracting(true);
+    try {
+      const { base64, mimeType } = await compressAndEncodeImage(file);
+      const result = await extractQuestionsFromImage(base64, mimeType);
+
+      if (!result || result.questions.length === 0) {
+        setParseError('No questions could be extracted from the image. Try a clearer photo or a different image.');
+        return;
+      }
+
+      if (result.weekNumber) setWeekNumber(result.weekNumber);
+      if (result.theme) setTopic(result.theme);
+      setCsvQuestions(result.questions);
+    } catch (err) {
+      console.error('[WeekModal] Image extraction error:', err);
+      setParseError('Failed to extract questions. Check your internet connection and try again.');
+    } finally {
+      setIsExtracting(false);
+    }
+  }, []);
+
   const handleModeChange = (mode: InputMode) => {
     setInputMode(mode);
     setCsvFileName('');
     setCsvQuestions([]);
     setRawText('');
     setParseError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    setImageFileName('');
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl('');
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   if (!isOpen) return null;
@@ -323,6 +397,17 @@ export function WeekModal({
             >
               <Type size={16} />
               Paste Text
+            </button>
+            <button
+              onClick={() => handleModeChange('image')}
+              className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+                inputMode === 'image'
+                  ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5'
+                  : 'text-content-muted hover:text-content-inverse'
+              }`}
+            >
+              <ScanSearch size={16} />
+              From Image
             </button>
           </div>
         )}
@@ -395,6 +480,56 @@ export function WeekModal({
             </div>
           )}
 
+          {inputMode === 'image' && !isEditMode && (
+            <div>
+              <label className="block text-sm font-medium text-content-muted mb-1">
+                Upload Image
+              </label>
+              <p className="text-xs text-content-muted mb-3">
+                Take a photo of your exercise sheet — AI will extract questions and answers automatically.
+              </p>
+              <div
+                onClick={() => !isExtracting && imageInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-lg p-5 text-center transition-colors ${
+                  isExtracting
+                    ? 'border-navy-600 cursor-not-allowed opacity-60'
+                    : 'border-navy-600 cursor-pointer hover:border-accent-blue/50'
+                }`}
+              >
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {isExtracting ? (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <Loader2 size={28} className="text-accent-blue animate-spin" />
+                    <p className="text-content-inverse font-medium text-sm">Extracting questions…</p>
+                    <p className="text-xs text-content-muted">AI is reading your image</p>
+                  </div>
+                ) : imagePreviewUrl ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Preview"
+                      className="max-h-32 rounded-lg object-contain mx-auto"
+                    />
+                    <p className="text-content-muted text-xs mt-1">{imageFileName} — click to replace</p>
+                  </div>
+                ) : (
+                  <>
+                    <ImageIcon size={28} className="mx-auto text-content-muted mb-2" />
+                    <p className="text-content-inverse font-medium">Click to upload or take a photo</p>
+                    <p className="text-xs text-content-muted mt-1">JPG, PNG, HEIC — large images are auto-compressed</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           {inputMode === 'text' && !isEditMode && (
             <div>
               <label className="block text-sm font-medium text-content-muted mb-1">
@@ -445,7 +580,7 @@ export function WeekModal({
             </div>
           )}
 
-          {parseError && (inputMode === 'csv' || inputMode === 'text') && (
+          {parseError && (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && (
             <div className="flex items-start gap-2 p-3 bg-status-error/10 border border-status-error/20 rounded-lg">
               <AlertCircle size={18} className="text-status-error flex-shrink-0 mt-0.5" />
               <p className="text-sm text-status-error">{parseError}</p>
@@ -483,7 +618,7 @@ export function WeekModal({
             />
           </div>
 
-          {(inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 && (
+          {(inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0 && (
             <div>
               <div className="flex flex-wrap gap-2 mb-3">
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
@@ -548,10 +683,18 @@ export function WeekModal({
             </button>
             <button
               onClick={handleSave}
-              disabled={isSaving || !topic.trim() || weekNumberInUse}
+              disabled={isSaving || isExtracting || !topic.trim() || weekNumberInUse}
               className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSaving ? 'Saving...' : isEditMode ? 'Save Changes' : (inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 ? `Create Week & Import ${csvQuestions.length} Questions` : 'Create Week'}
+              {isSaving
+                ? 'Saving...'
+                : isExtracting
+                ? 'Extracting...'
+                : isEditMode
+                ? 'Save Changes'
+                : (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0
+                ? `Create Week & Import ${csvQuestions.length} Questions`
+                : 'Create Week'}
             </button>
           </div>
         </div>

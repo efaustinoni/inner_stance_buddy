@@ -1,8 +1,9 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-14 03:15
+// Last Updated: 2026-04-02 (add From Image tab)
 
 import { useState, useCallback, useRef } from 'react';
-import { X, FileText, AlertCircle, Calendar, Tag, Upload, Type, CheckCircle } from 'lucide-react';
+import { X, FileText, AlertCircle, Calendar, Tag, Upload, Type, CheckCircle, Image as ImageIcon, Loader2, ScanSearch } from 'lucide-react';
+import { extractQuestionsFromImage } from '../../lib/exerciseService';
 
 export interface BulkImportData {
   weekNumber?: number;
@@ -16,7 +17,7 @@ interface BulkImportModalProps {
   onImport: (data: BulkImportData) => Promise<void>;
 }
 
-type ImportMode = 'text' | 'csv';
+type ImportMode = 'text' | 'csv' | 'image';
 
 const QUESTION_LABEL_PATTERN = /^(Reflectie|Actie|Vraag|Question|Action|Reflection|Oefening|Exercise)\s*\d+[a-z]?[:.]\s*/i;
 const NUMBERED_LABEL_PATTERN = /^(\d+[a-z]?)[.:]\s+(?=[A-Z])/;
@@ -188,6 +189,40 @@ function parseCSV(csvText: string): BulkImportData {
   return { weekNumber, theme, questions };
 }
 
+/** Resize + JPEG-compress an image file, returning the base64-encoded result (no data-URL prefix). */
+async function compressAndEncodeImage(file: File, maxDim = 2048, quality = 0.85): Promise<{ base64: string; mimeType: string }> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let { width, height } = img;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+        const base64 = dataUrl.split(',')[1];
+        resolve({ base64, mimeType: 'image/jpeg' });
+      };
+      img.onerror = reject;
+      img.src = e.target!.result as string;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalProps) {
   const [importMode, setImportMode] = useState<ImportMode>('csv');
   const [rawText, setRawText] = useState('');
@@ -196,6 +231,12 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
   const [isImporting, setIsImporting] = useState(false);
   const [parseError, setParseError] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Image-mode state
+  const [imageFileName, setImageFileName] = useState('');
+  const [imagePreviewUrl, setImagePreviewUrl] = useState('');
+  const [isExtracting, setIsExtracting] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
 
   const handleTextChange = useCallback((text: string) => {
     setRawText(text);
@@ -251,14 +292,51 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
     onClose();
   };
 
+  const handleImageUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImageFileName(file.name);
+    setParseError('');
+    setParsedData({ questions: [] });
+
+    // Show a local object URL for preview
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+
+    setIsExtracting(true);
+    try {
+      const { base64, mimeType } = await compressAndEncodeImage(file);
+      const result = await extractQuestionsFromImage(base64, mimeType);
+
+      if (!result || result.questions.length === 0) {
+        setParseError('No questions could be extracted from the image. Try a clearer photo or a different image.');
+        return;
+      }
+
+      setParsedData({
+        weekNumber: result.weekNumber,
+        theme: result.theme,
+        questions: result.questions,
+      });
+    } catch (err) {
+      console.error('[BulkImportModal] Image extraction error:', err);
+      setParseError('Failed to extract questions. Check your internet connection and try again.');
+    } finally {
+      setIsExtracting(false);
+    }
+  }, []);
+
   const resetForm = () => {
     setRawText('');
     setCsvFileName('');
+    setImageFileName('');
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
+    setImagePreviewUrl('');
     setParsedData({ questions: [] });
     setParseError('');
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (imageInputRef.current) imageInputRef.current.value = '';
   };
 
   const handleClose = () => {
@@ -314,10 +392,69 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
             <Type size={16} />
             Paste Text
           </button>
+          <button
+            onClick={() => handleModeChange('image')}
+            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
+              importMode === 'image'
+                ? 'text-accent-blue border-b-2 border-accent-blue bg-accent-blue/5'
+                : 'text-content-muted hover:text-content-inverse'
+            }`}
+          >
+            <ScanSearch size={16} />
+            From Image
+          </button>
         </div>
 
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
-          {importMode === 'csv' ? (
+          {importMode === 'image' ? (
+            <div>
+              <label className="block text-sm font-medium text-content-muted mb-1">
+                Upload Image
+              </label>
+              <p className="text-xs text-content-muted mb-3">
+                Take a photo of a printed exercise sheet. AI will extract all questions and answers automatically.
+              </p>
+              <div
+                onClick={() => !isExtracting && imageInputRef.current?.click()}
+                className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${
+                  isExtracting
+                    ? 'border-navy-600 cursor-not-allowed opacity-60'
+                    : 'border-navy-600 cursor-pointer hover:border-accent-blue/50'
+                }`}
+              >
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/*"
+                  capture="environment"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+                {isExtracting ? (
+                  <div className="flex flex-col items-center gap-2 py-2">
+                    <Loader2 size={32} className="text-accent-blue animate-spin" />
+                    <p className="text-content-inverse font-medium text-sm">Extracting questions…</p>
+                    <p className="text-xs text-content-muted">AI is reading your image</p>
+                  </div>
+                ) : imagePreviewUrl ? (
+                  <div className="flex flex-col items-center gap-2">
+                    <img
+                      src={imagePreviewUrl}
+                      alt="Preview"
+                      className="max-h-36 rounded-lg object-contain mx-auto"
+                    />
+                    <p className="text-content-muted text-xs mt-1">{imageFileName} — click to replace</p>
+                  </div>
+                ) : (
+                  <>
+                    <ImageIcon size={32} className="mx-auto text-content-muted mb-2" />
+                    <p className="text-content-inverse font-medium">Click to upload or take a photo</p>
+                    <p className="text-xs text-content-muted mt-1">JPG, PNG, HEIC — large images are auto-compressed</p>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : importMode === 'csv' ? (
             <div>
               <label className="block text-sm font-medium text-content-muted mb-1">
                 Upload CSV File
@@ -426,10 +563,10 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
           </button>
           <button
             onClick={handleImport}
-            disabled={isImporting || parsedData.questions.length === 0}
+            disabled={isImporting || isExtracting || parsedData.questions.length === 0}
             className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isImporting ? 'Importing...' : `Import ${parsedData.questions.length} Questions`}
+            {isImporting ? 'Importing...' : isExtracting ? 'Extracting...' : `Import ${parsedData.questions.length} Questions`}
           </button>
         </div>
       </div>

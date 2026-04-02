@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02
+// Last Updated: 2026-04-02 (add extractQuestionsFromImage)
 
 import { supabase } from './supabase';
 
@@ -533,6 +533,55 @@ export async function bulkImportQuestions(
   }
 
   return true;
+}
+
+export interface ImageExtractedData {
+  weekNumber?: number;
+  theme?: string;
+  questions: { label: string; text: string; answer?: string }[];
+}
+
+/**
+ * Calls the `extract-questions-from-image` Supabase Edge Function.
+ * The function uses the OPENAI_API_KEY + OPENAI_MODEL secrets to extract
+ * questions (and optionally answers) from the provided image.
+ *
+ * @param imageBase64 - Base64-encoded image data (without the data-URL prefix)
+ * @param mimeType   - MIME type of the image, e.g. "image/jpeg" or "image/png"
+ */
+export async function extractQuestionsFromImage(
+  imageBase64: string,
+  mimeType: string
+): Promise<ImageExtractedData | null> {
+  const { data, error } = await supabase.functions.invoke('extract-questions-from-image', {
+    body: { imageBase64, mimeType },
+  });
+
+  if (error) {
+    console.error('[extractQuestionsFromImage] Edge function error:', error);
+    return null;
+  }
+
+  if (!data || !Array.isArray(data.questions)) {
+    console.error('[extractQuestionsFromImage] Unexpected response shape:', data);
+    return null;
+  }
+
+  const questions = data.questions.map((q: any) => ({
+    label: q.label || 'Vraag',
+    text: q.text || '',
+    // Answers returned from the Edge Function already use | as line separator;
+    // convert them to newlines so they match the app's internal format.
+    answer: q.answer
+      ? String(q.answer).split('|').map((a: string) => a.trim()).join('\n')
+      : undefined,
+  }));
+
+  return {
+    weekNumber: data.weekNumber ?? undefined,
+    theme: data.theme ?? undefined,
+    questions,
+  };
 }
 
 export interface ProgressTracker {

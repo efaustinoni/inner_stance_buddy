@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02: Image-to-questions extraction using OpenAI vision
+  - New Supabase Edge Function `extract-questions-from-image` calls OpenAI vision API (model and key read from `OPENAI_API_KEY` / `OPENAI_MODEL` secrets)
+  - Images are compressed client-side (max 2048 px, JPEG 85%) before upload to stay within payload limits
+  - **BulkImportModal**: new "From Image" tab — upload or photograph an exercise sheet; AI extracts questions, labels and answers automatically with a live spinner and image preview
+  - **WeekModal**: same "From Image" tab available when creating a new week
+  - Extracted week number and theme auto-fill the form fields; questions shown in the preview list before saving
+  - Error handling for extraction failures with user-friendly messages
 - 2026-04-02: Quarter aggregation for weeks
   - New `exercise_quarters` table with user-defined labels (e.g. "2026-Q2", "Q2 - Effectiveness")
   - Weeks can optionally belong to a quarter; existing weeks are preserved as "Unassigned"
