@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 18:06 UTC (use decrypted views for encrypted columns)
+// Last Updated: 2026-04-02 20:16 UTC (switch to decrypted views - migration confirmed applied)
 
 import { supabase } from './supabase';
 
@@ -141,7 +141,7 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
   }
 
   const { data: questions, error: questionsError } = await supabase
-    .from('exercise_questions')
+    .from('decrypted_exercise_questions')
     .select('*')
     .eq('week_id', weekId)
     .order('sort_order', { ascending: true });
@@ -156,7 +156,7 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
   let answers: ExerciseAnswer[] = [];
   if (questionIds.length > 0) {
     const { data: answersData } = await supabase
-      .from('exercise_answers')
+      .from('decrypted_exercise_answers')
       .select('*')
       .in('question_id', questionIds);
     answers = answersData || [];
@@ -249,7 +249,7 @@ export async function copyWeekToQuarter(
   }
 
   const { data: sourceQuestions } = await supabase
-    .from('exercise_questions')
+    .from('decrypted_exercise_questions')
     .select('*')
     .eq('week_id', weekId)
     .order('sort_order', { ascending: true });
@@ -276,7 +276,7 @@ export async function copyWeekToQuarter(
     if (includeAnswers && newQuestions.length > 0) {
       const oldIds = newQuestions.map(q => q.oldId);
       const { data: sourceAnswers } = await supabase
-        .from('exercise_answers')
+        .from('decrypted_exercise_answers')
         .select('*')
         .eq('user_id', user.id)
         .in('question_id', oldIds);
@@ -695,7 +695,7 @@ export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
 
   const questionIds = trackers.map(t => t.question_id);
   const { data: questions } = await supabase
-    .from('exercise_questions')
+    .from('decrypted_exercise_questions')
     .select('*')
     .in('id', questionIds);
 
@@ -729,7 +729,7 @@ export async function fetchTrackerWithCheckIns(trackerId: string): Promise<Track
   }
 
   const { data: question } = await supabase
-    .from('exercise_questions')
+    .from('decrypted_exercise_questions')
     .select('*')
     .eq('id', tracker.question_id)
     .maybeSingle();
@@ -741,13 +741,13 @@ export async function fetchTrackerWithCheckIns(trackerId: string): Promise<Track
     .maybeSingle();
 
   const { data: checkIns } = await supabase
-    .from('progress_check_ins')
+    .from('decrypted_progress_check_ins')
     .select('*')
     .eq('tracker_id', trackerId)
     .order('check_in_date', { ascending: true });
 
   const { data: answer } = await supabase
-    .from('exercise_answers')
+    .from('decrypted_exercise_answers')
     .select('*')
     .eq('question_id', tracker.question_id)
     .eq('user_id', tracker.user_id)
@@ -891,7 +891,7 @@ export async function fetchDashboardData(): Promise<{
 
   const weekIds = weeks.map(w => w.id);
   const { data: questions } = await supabase
-    .from('exercise_questions')
+    .from('decrypted_exercise_questions')
     .select('*')
     .in('week_id', weekIds)
     .order('sort_order', { ascending: true });
@@ -901,7 +901,7 @@ export async function fetchDashboardData(): Promise<{
   const questionIds = questions.map(q => q.id);
 
   const { data: answers } = await supabase
-    .from('exercise_answers')
+    .from('decrypted_exercise_answers')
     .select('*')
     .eq('user_id', user.id)
     .in('question_id', questionIds);

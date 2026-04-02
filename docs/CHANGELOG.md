@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 20:16 UTC: Frontend switched to decrypted views — encryption fully active, data displayed correctly again (v1.3.1)
 - 2026-04-02 19:06 UTC: Auto-update fix — users now always get latest version without hard refresh
   - Added `public/_headers` with `Cache-Control: no-cache` for HTML and `/` to prevent Netlify CDN from caching the entry point
   - Rewrote service worker: network-first for HTML navigation, cache-first for hashed `/assets/*`, `skipWaiting` + `clients.claim` for instant activation
