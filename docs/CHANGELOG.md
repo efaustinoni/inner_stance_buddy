@@ -8,6 +8,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 16:34 UTC: Dashboard week improvements
+  - Each week row is now collapsible/expandable (click the week header to toggle questions)
+  - Quarter selector shown on every week (not just unassigned), allowing quarter reassignment directly from the dashboard
 - 2026-04-02 16:20 UTC: Image-to-questions extraction using OpenAI vision
   - New Supabase Edge Function `extract-questions-from-image` calls OpenAI vision API (model and key read from `OPENAI_API_KEY` / `OPENAI_MODEL` secrets)
   - Images are compressed client-side (max 2048 px, JPEG 85%) before upload to stay within payload limits

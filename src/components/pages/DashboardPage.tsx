@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 (fix quarter filter dependency)
+// Last Updated: 2026-04-02 16:34 UTC (per-week collapse + quarter selector for all weeks)
 
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings, ChevronDown } from 'lucide-react';
@@ -29,6 +29,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [collapsedQuarters, setCollapsedQuarters] = useState<Set<string>>(new Set());
+  const [collapsedWeeks, setCollapsedWeeks] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -55,6 +56,20 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       else next.add(key);
       return next;
     });
+  };
+
+  const toggleWeekCollapse = (weekId: string) => {
+    setCollapsedWeeks(prev => {
+      const next = new Set(prev);
+      if (next.has(weekId)) next.delete(weekId);
+      else next.add(weekId);
+      return next;
+    });
+  };
+
+  const handleChangeWeekQuarter = async (weekId: string, quarterId: string) => {
+    await moveWeekToQuarter(weekId, quarterId || null);
+    await loadData();
   };
 
   const filteredQuestions = useMemo(() => {
@@ -356,41 +371,58 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
                 {!isCollapsed && (
                   <div className="space-y-6">
-                    {weekEntries.map(([weekId, { weekNumber, topic, questions: wqs }]) => (
-                      <div key={weekId}>
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="px-2 py-1 text-xs font-medium bg-navy-700 text-content-inverse rounded">
-                            Week {weekNumber}
-                          </span>
-                          <span className="text-sm text-content-muted">{topic}</span>
-                          {/* Assign to quarter — shown only for unassigned weeks when quarters exist */}
-                          {quarterKey === '__unassigned__' && quarters.length > 0 && (
-                            <select
-                              defaultValue=""
-                              onChange={(e) => e.target.value && handleAssignWeekToQuarter(weekId, e.target.value)}
-                              className="ml-1 px-2 py-1 text-xs bg-navy-700 border border-navy-600 rounded text-content-muted hover:border-accent-blue focus:outline-none focus:border-accent-blue transition-colors cursor-pointer"
+                    {weekEntries.map(([weekId, { weekNumber, topic, questions: wqs }]) => {
+                      const isWeekCollapsed = collapsedWeeks.has(weekId);
+                      return (
+                        <div key={weekId}>
+                          <div className="flex items-center gap-2 mb-3">
+                            {/* Collapse/expand toggle */}
+                            <button
+                              onClick={() => toggleWeekCollapse(weekId)}
+                              className="flex items-center gap-2 min-w-0 flex-1 group text-left"
                             >
-                              <option value="" disabled>Assign to quarter…</option>
-                              {quarters.map(q => (
-                                <option key={q.id} value={q.id}>{q.label}</option>
+                              <span className="px-2 py-1 text-xs font-medium bg-navy-700 text-content-inverse rounded shrink-0">
+                                Week {weekNumber}
+                              </span>
+                              <span className="text-sm text-content-muted truncate">{topic}</span>
+                              <ChevronDown
+                                size={14}
+                                className={`shrink-0 text-content-muted transition-transform group-hover:text-content-inverse ${
+                                  isWeekCollapsed ? '-rotate-90' : ''
+                                }`}
+                              />
+                            </button>
+                            {/* Quarter selector — shown for all weeks when quarters exist */}
+                            {quarters.length > 0 && (
+                              <select
+                                value={quarterKey === '__unassigned__' ? '' : quarterKey}
+                                onChange={(e) => handleChangeWeekQuarter(weekId, e.target.value)}
+                                className="px-2 py-1 text-xs bg-navy-700 border border-navy-600 rounded text-content-muted hover:border-accent-blue focus:outline-none focus:border-accent-blue transition-colors cursor-pointer shrink-0"
+                              >
+                                <option value="">— No quarter —</option>
+                                {quarters.map(q => (
+                                  <option key={q.id} value={q.id}>{q.label}</option>
+                                ))}
+                              </select>
+                            )}
+                            <span className="text-xs text-content-muted shrink-0">
+                              {wqs.length} question{wqs.length !== 1 ? 's' : ''}
+                            </span>
+                          </div>
+                          {!isWeekCollapsed && (
+                            <div className="space-y-2">
+                              {wqs.map(question => (
+                                <QuestionCard
+                                  key={question.id}
+                                  question={question}
+                                  onNavigate={onNavigate}
+                                />
                               ))}
-                            </select>
+                            </div>
                           )}
-                          <span className="text-xs text-content-muted ml-auto">
-                            {wqs.length} question{wqs.length !== 1 ? 's' : ''}
-                          </span>
                         </div>
-                        <div className="space-y-2">
-                          {wqs.map(question => (
-                            <QuestionCard
-                              key={question.id}
-                              question={question}
-                              onNavigate={onNavigate}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 )}
               </div>
