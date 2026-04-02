@@ -7,6 +7,7 @@ import { Card } from '../ui/Card';
 import {
   fetchDashboardData,
   fetchUserQuarters,
+  moveWeekToQuarter,
   type ExerciseWeek,
   type ExerciseQuarter,
   type DashboardQuestion
@@ -40,6 +41,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     setQuestions(data.questions);
     setQuarters(quartersData);
     setLoading(false);
+  };
+
+  const handleAssignWeekToQuarter = async (weekId: string, quarterId: string) => {
+    await moveWeekToQuarter(weekId, quarterId);
+    await loadData();
   };
 
   const toggleQuarterCollapse = (key: string) => {
@@ -357,6 +363,19 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                             Week {weekNumber}
                           </span>
                           <span className="text-sm text-content-muted">{topic}</span>
+                          {/* Assign to quarter — shown only for unassigned weeks when quarters exist */}
+                          {quarterKey === '__unassigned__' && quarters.length > 0 && (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => e.target.value && handleAssignWeekToQuarter(weekId, e.target.value)}
+                              className="ml-1 px-2 py-1 text-xs bg-navy-700 border border-navy-600 rounded text-content-muted hover:border-accent-blue focus:outline-none focus:border-accent-blue transition-colors cursor-pointer"
+                            >
+                              <option value="" disabled>Assign to quarter…</option>
+                              {quarters.map(q => (
+                                <option key={q.id} value={q.id}>{q.label}</option>
+                              ))}
+                            </select>
+                          )}
                           <span className="text-xs text-content-muted ml-auto">
                             {wqs.length} question{wqs.length !== 1 ? 's' : ''}
                           </span>

@@ -130,19 +130,19 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
     await loadWeeks();
   };
 
-  const handleSaveQuarter = async (label: string) => {
-    if (editingQuarter) {
-      await updateQuarter(editingQuarter.id, label);
+  // New QuarterModal interface: onSave(label, quarterId?) for both create and update
+  const handleSaveQuarter = async (label: string, quarterId?: string) => {
+    if (quarterId) {
+      await updateQuarter(quarterId, label);
     } else {
       await createQuarter(label);
     }
     await loadWeeks();
   };
 
-  const handleDeleteQuarter = async () => {
-    if (!editingQuarter) return;
-    await deleteQuarter(editingQuarter.id);
-    setEditingQuarter(null);
+  // New QuarterModal interface: onDelete(quarterId)
+  const handleDeleteQuarter = async (quarterId: string) => {
+    await deleteQuarter(quarterId);
     await loadWeeks();
   };
 
@@ -378,14 +378,10 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
 
       <QuarterModal
         isOpen={quarterModalOpen}
-        onClose={() => {
-          setQuarterModalOpen(false);
-          setEditingQuarter(null);
-        }}
+        onClose={() => setQuarterModalOpen(false)}
         onSave={handleSaveQuarter}
-        onDelete={editingQuarter ? handleDeleteQuarter : undefined}
-        initialData={editingQuarter || undefined}
-        existingLabels={quarters.map(q => q.label)}
+        onDelete={handleDeleteQuarter}
+        quarters={quarters}
       />
 
       <QuestionModal
