@@ -35,15 +35,6 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    // Verify authentication
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const body = await req.json();
     const { imageBase64, mimeType = "image/jpeg" } = body;
 
