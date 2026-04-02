@@ -8,6 +8,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 18:06 UTC: Column encryption for user data privacy
+  - Sensitive columns encrypted at rest using pgcrypto + Supabase Vault: `exercise_answers.answer_text`, `exercise_questions.question_text`, `exercise_questions.question_label`, `progress_check_ins.notes`
+  - Admin sees only encrypted ciphertext in Table Editor and SQL Editor
+  - Encryption is transparent: triggers encrypt on write, decrypted views decrypt on read
+  - Existing data migrated to encrypted form
+  - No impact on user experience or password resets — encryption key is managed by Supabase Vault
 - 2026-04-02 17:28 UTC: WeekSelector dropdown now shows quarter label for each week (gold text) and displays the current quarter in the trigger button subtitle
 - 2026-04-02 16:34 UTC: Dashboard week improvements
   - Each week row is now collapsible/expandable (click the week header to toggle questions)
