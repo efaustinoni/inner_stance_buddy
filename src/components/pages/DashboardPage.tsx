@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 16:34 UTC (per-week collapse + quarter selector for all weeks)
+// Last Updated: 2026-04-02 20:43 UTC (reset collapsed weeks when quarter filter changes)
 
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings, ChevronDown } from 'lucide-react';
@@ -34,6 +34,12 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Reset collapsed weeks whenever the quarter or week filter changes
+  // so the user always sees questions expanded when switching context
+  useEffect(() => {
+    setCollapsedWeeks(new Set());
+  }, [selectedQuarter, selectedWeek]);
 
   const loadData = async () => {
     setLoading(true);
