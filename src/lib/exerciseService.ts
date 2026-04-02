@@ -1,7 +1,15 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-14 02:15
+// Last Updated: 2026-04-02
 
 import { supabase } from './supabase';
+
+export interface ExerciseQuarter {
+  id: string;
+  user_id: string;
+  label: string;
+  created_at: string;
+  updated_at: string;
+}
 
 export interface ExerciseWeek {
   id: string;
@@ -9,6 +17,8 @@ export interface ExerciseWeek {
   week_number: number;
   title: string;
   topic: string;
+  quarter_id?: string | null;
+  quarter_label?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -40,10 +50,70 @@ export interface WeekWithQuestions extends ExerciseWeek {
   questions: QuestionWithAnswer[];
 }
 
+export async function fetchUserQuarters(): Promise<ExerciseQuarter[]> {
+  const { data, error } = await supabase
+    .from('exercise_quarters')
+    .select('*')
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching quarters:', error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function createQuarter(label: string): Promise<ExerciseQuarter | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data, error } = await supabase
+    .from('exercise_quarters')
+    .insert({ user_id: user.id, label: label.trim() })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating quarter:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function updateQuarter(quarterId: string, label: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('exercise_quarters')
+    .update({ label: label.trim(), updated_at: new Date().toISOString() })
+    .eq('id', quarterId);
+
+  if (error) {
+    console.error('Error updating quarter:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function deleteQuarter(quarterId: string): Promise<boolean> {
+  const { error } = await supabase
+    .from('exercise_quarters')
+    .delete()
+    .eq('id', quarterId);
+
+  if (error) {
+    console.error('Error deleting quarter:', error);
+    return false;
+  }
+
+  return true;
+}
+
 export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
   const { data, error } = await supabase
     .from('exercise_weeks')
-    .select('*')
+    .select('*, exercise_quarters(label)')
     .order('week_number', { ascending: true });
 
   if (error) {
@@ -51,7 +121,11 @@ export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
     return [];
   }
 
-  return data || [];
+  return (data || []).map((w: any) => ({
+    ...w,
+    quarter_label: w.exercise_quarters?.label ?? null,
+    exercise_quarters: undefined,
+  }));
 }
 
 export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQuestions | null> {
@@ -101,7 +175,8 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
 
 export async function createWeek(
   weekNumber: number,
-  topic: string
+  topic: string,
+  quarterId?: string | null
 ): Promise<ExerciseWeek | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
@@ -112,7 +187,8 @@ export async function createWeek(
       user_id: user.id,
       week_number: weekNumber,
       title: 'Exercise',
-      topic
+      topic,
+      quarter_id: quarterId ?? null
     })
     .select()
     .single();
@@ -125,9 +201,107 @@ export async function createWeek(
   return data;
 }
 
+export async function moveWeekToQuarter(weekId: string, quarterId: string | null): Promise<boolean> {
+  const { error } = await supabase
+    .from('exercise_weeks')
+    .update({ quarter_id: quarterId, updated_at: new Date().toISOString() })
+    .eq('id', weekId);
+
+  if (error) {
+    console.error('Error moving week to quarter:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function copyWeekToQuarter(
+  weekId: string,
+  targetQuarterId: string | null,
+  includeAnswers: boolean
+): Promise<ExerciseWeek | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  const { data: sourceWeek } = await supabase
+    .from('exercise_weeks')
+    .select('*')
+    .eq('id', weekId)
+    .maybeSingle();
+
+  if (!sourceWeek) return null;
+
+  const { data: newWeek, error: weekError } = await supabase
+    .from('exercise_weeks')
+    .insert({
+      user_id: user.id,
+      week_number: sourceWeek.week_number,
+      title: sourceWeek.title,
+      topic: sourceWeek.topic,
+      quarter_id: targetQuarterId
+    })
+    .select()
+    .single();
+
+  if (weekError || !newWeek) {
+    console.error('Error copying week:', weekError);
+    return null;
+  }
+
+  const { data: sourceQuestions } = await supabase
+    .from('exercise_questions')
+    .select('*')
+    .eq('week_id', weekId)
+    .order('sort_order', { ascending: true });
+
+  if (sourceQuestions && sourceQuestions.length > 0) {
+    const newQuestions: any[] = [];
+    for (const q of sourceQuestions) {
+      const { data: newQ, error: qError } = await supabase
+        .from('exercise_questions')
+        .insert({
+          week_id: newWeek.id,
+          question_label: q.question_label,
+          question_text: q.question_text,
+          sort_order: q.sort_order
+        })
+        .select()
+        .single();
+
+      if (!qError && newQ) {
+        newQuestions.push({ newId: newQ.id, oldId: q.id });
+      }
+    }
+
+    if (includeAnswers && newQuestions.length > 0) {
+      const oldIds = newQuestions.map(q => q.oldId);
+      const { data: sourceAnswers } = await supabase
+        .from('exercise_answers')
+        .select('*')
+        .eq('user_id', user.id)
+        .in('question_id', oldIds);
+
+      if (sourceAnswers && sourceAnswers.length > 0) {
+        for (const a of sourceAnswers) {
+          const mapping = newQuestions.find(q => q.oldId === a.question_id);
+          if (mapping) {
+            await supabase.from('exercise_answers').insert({
+              question_id: mapping.newId,
+              user_id: user.id,
+              answer_text: a.answer_text
+            });
+          }
+        }
+      }
+    }
+  }
+
+  return newWeek;
+}
+
 export async function updateWeek(
   weekId: string,
-  updates: { title?: string; topic?: string; week_number?: number }
+  updates: { title?: string; topic?: string; week_number?: number; quarter_id?: string | null }
 ): Promise<boolean> {
   const { error } = await supabase
     .from('exercise_weeks')
@@ -616,6 +790,8 @@ export interface DashboardQuestion {
   week_id: string;
   week_number: number;
   week_topic: string;
+  quarter_id?: string | null;
+  quarter_label?: string | null;
   answer_text?: string;
   tracker_id?: string;
   tracker_started_at?: string;
@@ -628,10 +804,18 @@ export async function fetchDashboardData(): Promise<{
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { weeks: [], questions: [] };
 
-  const { data: weeks } = await supabase
+  const { data: weeksRaw } = await supabase
     .from('exercise_weeks')
-    .select('*')
+    .select('*, exercise_quarters(label)')
     .order('week_number', { ascending: true });
+
+  if (!weeksRaw?.length) return { weeks: [], questions: [] };
+
+  const weeks: ExerciseWeek[] = weeksRaw.map((w: any) => ({
+    ...w,
+    quarter_label: w.exercise_quarters?.label ?? null,
+    exercise_quarters: undefined,
+  }));
 
   if (!weeks?.length) return { weeks: [], questions: [] };
 
@@ -675,6 +859,8 @@ export async function fetchDashboardData(): Promise<{
       week_id: q.week_id,
       week_number: week?.week_number || 0,
       week_topic: week?.topic || '',
+      quarter_id: week?.quarter_id ?? null,
+      quarter_label: week?.quarter_label ?? null,
       answer_text: answer?.answer_text,
       tracker_id: tracker?.id,
       tracker_started_at: tracker?.started_at

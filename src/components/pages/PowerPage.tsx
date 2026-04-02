@@ -2,17 +2,19 @@
 // Last Updated: 2026-02-14 01:15
 
 import { useState, useEffect } from 'react';
-import { Plus, FileText, Loader2, ArrowLeft, Home, ChevronRight } from 'lucide-react';
+import { Plus, FileText, Loader2, ArrowLeft, Home, ChevronRight, Layers } from 'lucide-react';
 import {
   WeekSelector,
   ExerciseQuestionCard,
   WeekModal,
   QuestionModal,
   BulkImportModal,
+  QuarterModal,
   type BulkImportData
 } from '../exercises';
 import {
   fetchUserWeeks,
+  fetchUserQuarters,
   fetchWeekWithQuestions,
   createWeek,
   updateWeek,
@@ -23,7 +25,12 @@ import {
   bulkImportQuestions,
   createProgressTracker,
   getTrackerForQuestion,
+  createQuarter,
+  updateQuarter,
+  deleteQuarter,
+  copyWeekToQuarter,
   type ExerciseWeek,
+  type ExerciseQuarter,
   type WeekWithQuestions,
   type ProgressTracker
 } from '../../lib/exerciseService';
@@ -35,6 +42,7 @@ interface PowerPageProps {
 
 export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
   const [weeks, setWeeks] = useState<ExerciseWeek[]>([]);
+  const [quarters, setQuarters] = useState<ExerciseQuarter[]>([]);
   const [selectedWeekId, setSelectedWeekId] = useState<string | null>(weekId || null);
   const [selectedWeekData, setSelectedWeekData] = useState<WeekWithQuestions | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,6 +51,8 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
 
   const [weekModalOpen, setWeekModalOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState<ExerciseWeek | null>(null);
+  const [quarterModalOpen, setQuarterModalOpen] = useState(false);
+  const [editingQuarter, setEditingQuarter] = useState<ExerciseQuarter | null>(null);
 
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
@@ -59,8 +69,9 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
 
   async function loadWeeks() {
     setIsLoading(true);
-    const data = await fetchUserWeeks();
+    const [data, quartersData] = await Promise.all([fetchUserWeeks(), fetchUserQuarters()]);
     setWeeks(data);
+    setQuarters(quartersData);
     if (data.length > 0 && !selectedWeekId) {
       const targetWeek = weekId ? data.find(w => w.id === weekId) : data[0];
       setSelectedWeekId(targetWeek?.id || data[0]?.id || null);
@@ -97,11 +108,11 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
     }
   };
 
-  const handleSaveWeek = async (weekNumber: number, topic: string, questions?: { label: string; text: string; answer?: string }[]) => {
+  const handleSaveWeek = async (weekNumber: number, topic: string, quarterId: string | null, questions?: { label: string; text: string; answer?: string }[]) => {
     if (editingWeek) {
-      await updateWeek(editingWeek.id, { week_number: weekNumber, topic });
+      await updateWeek(editingWeek.id, { week_number: weekNumber, topic, quarter_id: quarterId });
     } else {
-      const newWeek = await createWeek(weekNumber, topic);
+      const newWeek = await createWeek(weekNumber, topic, quarterId);
       if (newWeek) {
         setSelectedWeekId(newWeek.id);
         if (questions && questions.length > 0) {
@@ -110,6 +121,28 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
         }
       }
     }
+    await loadWeeks();
+  };
+
+  const handleCopyWeekToQuarter = async (targetQuarterId: string | null, includeAnswers: boolean) => {
+    if (!editingWeek) return;
+    await copyWeekToQuarter(editingWeek.id, targetQuarterId, includeAnswers);
+    await loadWeeks();
+  };
+
+  const handleSaveQuarter = async (label: string) => {
+    if (editingQuarter) {
+      await updateQuarter(editingQuarter.id, label);
+    } else {
+      await createQuarter(label);
+    }
+    await loadWeeks();
+  };
+
+  const handleDeleteQuarter = async () => {
+    if (!editingQuarter) return;
+    await deleteQuarter(editingQuarter.id);
+    setEditingQuarter(null);
     await loadWeeks();
   };
 
@@ -229,18 +262,28 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <WeekSelector
           weeks={weeks}
+          quarters={quarters}
           selectedWeekId={selectedWeekId}
           onSelectWeek={setSelectedWeekId}
           onAddWeek={handleAddWeek}
           onEditWeek={handleEditWeek}
         />
-        <button
-          onClick={handleAddWeek}
-          className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold text-navy-900 rounded-lg font-medium hover:bg-accent-gold/90 transition-colors"
-        >
-          <Plus size={18} />
-          Add New Week
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { setEditingQuarter(null); setQuarterModalOpen(true); }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-navy-700 text-content-inverse rounded-lg font-medium hover:bg-navy-600 transition-colors"
+          >
+            <Layers size={18} />
+            Manage Quarters
+          </button>
+          <button
+            onClick={handleAddWeek}
+            className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold text-navy-900 rounded-lg font-medium hover:bg-accent-gold/90 transition-colors"
+          >
+            <Plus size={18} />
+            Add New Week
+          </button>
+        </div>
       </div>
 
       {selectedWeekId && selectedWeekData && (
@@ -319,11 +362,30 @@ export function PowerPage({ weekId, onNavigate }: PowerPageProps) {
         }}
         onSave={handleSaveWeek}
         onDelete={editingWeek ? handleDeleteWeek : undefined}
+        onCopyToQuarter={editingWeek ? handleCopyWeekToQuarter : undefined}
         initialData={editingWeek ? {
           week_number: editingWeek.week_number,
-          topic: editingWeek.topic
+          topic: editingWeek.topic,
+          quarter_id: editingWeek.quarter_id
         } : undefined}
         existingWeekNumbers={weeks.map(w => w.week_number)}
+        weekNumbersInQuarter={weeks
+          .filter(w => w.quarter_id === (editingWeek?.quarter_id ?? null))
+          .map(w => w.week_number)
+          .filter(n => !editingWeek || n !== editingWeek.week_number)}
+        quarters={quarters}
+      />
+
+      <QuarterModal
+        isOpen={quarterModalOpen}
+        onClose={() => {
+          setQuarterModalOpen(false);
+          setEditingQuarter(null);
+        }}
+        onSave={handleSaveQuarter}
+        onDelete={editingQuarter ? handleDeleteQuarter : undefined}
+        initialData={editingQuarter || undefined}
+        existingLabels={quarters.map(q => q.label)}
       />
 
       <QuestionModal

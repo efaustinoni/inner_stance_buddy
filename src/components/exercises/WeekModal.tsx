@@ -1,9 +1,10 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-14 00:10
+// Last Updated: 2026-04-02
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type } from 'lucide-react';
+import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type, Copy } from 'lucide-react';
 import { parseExerciseText } from './BulkImportModal';
+import type { ExerciseQuarter } from '../../lib/exerciseService';
 
 export interface ParsedQuestion {
   label: string;
@@ -14,13 +15,18 @@ export interface ParsedQuestion {
 interface WeekModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (weekNumber: number, topic: string, questions?: ParsedQuestion[]) => Promise<void>;
+  onSave: (weekNumber: number, topic: string, quarterId: string | null, questions?: ParsedQuestion[]) => Promise<void>;
   onDelete?: () => Promise<void>;
+  onCopyToQuarter?: (targetQuarterId: string | null, includeAnswers: boolean) => Promise<void>;
   initialData?: {
     week_number: number;
     topic: string;
+    quarter_id?: string | null;
   };
   existingWeekNumbers: number[];
+  quarters: ExerciseQuarter[];
+  /** week numbers already used in the selected quarter (for uniqueness check) */
+  weekNumbersInQuarter?: number[];
 }
 
 type InputMode = 'manual' | 'csv' | 'text';
@@ -125,14 +131,24 @@ export function WeekModal({
   onClose,
   onSave,
   onDelete,
+  onCopyToQuarter,
   initialData,
-  existingWeekNumbers
+  existingWeekNumbers,
+  quarters,
+  weekNumbersInQuarter = [],
 }: WeekModalProps) {
   const [inputMode, setInputMode] = useState<InputMode>('manual');
   const [weekNumber, setWeekNumber] = useState(initialData?.week_number || 1);
   const [topic, setTopic] = useState(initialData?.topic || '');
+  const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(initialData?.quarter_id ?? null);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Copy to quarter state
+  const [showCopyPanel, setShowCopyPanel] = useState(false);
+  const [copyTargetQuarterId, setCopyTargetQuarterId] = useState<string | null>(null);
+  const [copyIncludeAnswers, setCopyIncludeAnswers] = useState(false);
+  const [isCopying, setIsCopying] = useState(false);
 
   const [csvFileName, setCsvFileName] = useState('');
   const [csvQuestions, setCsvQuestions] = useState<ParsedQuestion[]>([]);
@@ -145,6 +161,7 @@ export function WeekModal({
       if (initialData) {
         setWeekNumber(initialData.week_number);
         setTopic(initialData.topic);
+        setSelectedQuarterId(initialData.quarter_id ?? null);
         setInputMode('manual');
       } else {
         const nextWeek = existingWeekNumbers.length > 0
@@ -152,10 +169,14 @@ export function WeekModal({
           : 1;
         setWeekNumber(nextWeek);
         setTopic('');
+        setSelectedQuarterId(null);
         setCsvFileName('');
         setCsvQuestions([]);
         setParseError('');
       }
+      setShowCopyPanel(false);
+      setCopyTargetQuarterId(null);
+      setCopyIncludeAnswers(false);
     }
   }, [isOpen, initialData, existingWeekNumbers]);
 
@@ -199,8 +220,17 @@ export function WeekModal({
     if (!topic.trim()) return;
     setIsSaving(true);
     const questionsToImport = (inputMode === 'csv' || inputMode === 'text') && csvQuestions.length > 0 ? csvQuestions : undefined;
-    await onSave(weekNumber, topic.trim(), questionsToImport);
+    await onSave(weekNumber, topic.trim(), selectedQuarterId, questionsToImport);
     setIsSaving(false);
+    onClose();
+  };
+
+  const handleCopy = async () => {
+    if (!onCopyToQuarter) return;
+    setIsCopying(true);
+    await onCopyToQuarter(copyTargetQuarterId, copyIncludeAnswers);
+    setIsCopying(false);
+    setShowCopyPanel(false);
     onClose();
   };
 
@@ -242,7 +272,7 @@ export function WeekModal({
   if (!isOpen) return null;
 
   const isEditMode = !!initialData;
-  const weekNumberInUse = !isEditMode && existingWeekNumbers.includes(weekNumber);
+  const weekNumberInUse = !isEditMode && weekNumbersInQuarter.includes(weekNumber);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -298,6 +328,73 @@ export function WeekModal({
         )}
 
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
+
+          {/* Quarter selector — shown in both create and edit modes */}
+          {!showCopyPanel && (
+            <div>
+              <label className="block text-sm font-medium text-content-muted mb-1">
+                Quarter <span className="text-xs font-normal">(optional)</span>
+              </label>
+              <select
+                value={selectedQuarterId || ''}
+                onChange={(e) => setSelectedQuarterId(e.target.value || null)}
+                className="w-full px-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue"
+              >
+                <option value="">— No quarter —</option>
+                {quarters.map(q => (
+                  <option key={q.id} value={q.id}>{q.label}</option>
+                ))}
+              </select>
+              {!selectedQuarterId && (
+                <p className="text-xs text-content-muted mt-1">This week will appear as "Unassigned".</p>
+              )}
+            </div>
+          )}
+
+          {/* Copy to Quarter panel (edit mode only) */}
+          {isEditMode && onCopyToQuarter && showCopyPanel && (
+            <div className="p-4 bg-navy-900 rounded-lg border border-navy-600 space-y-3">
+              <p className="text-sm font-medium text-content-inverse">Copy week to another quarter</p>
+              <div>
+                <label className="block text-xs text-content-muted mb-1">Target Quarter</label>
+                <select
+                  value={copyTargetQuarterId || ''}
+                  onChange={(e) => setCopyTargetQuarterId(e.target.value || null)}
+                  className="w-full px-3 py-2 bg-navy-800 border border-navy-600 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue"
+                >
+                  <option value="">— No quarter (unassigned) —</option>
+                  {quarters.map(q => (
+                    <option key={q.id} value={q.id}>{q.label}</option>
+                  ))}
+                </select>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={copyIncludeAnswers}
+                  onChange={(e) => setCopyIncludeAnswers(e.target.checked)}
+                  className="rounded border-navy-600"
+                />
+                <span className="text-sm text-content-inverse">Include answers</span>
+              </label>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCopy}
+                  disabled={isCopying}
+                  className="flex-1 px-3 py-2 bg-accent-blue text-white rounded-lg text-sm font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-50"
+                >
+                  {isCopying ? 'Copying...' : 'Copy Week'}
+                </button>
+                <button
+                  onClick={() => setShowCopyPanel(false)}
+                  className="px-3 py-2 text-content-muted hover:text-content-inverse rounded-lg text-sm transition-colors"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          )}
+
           {inputMode === 'text' && !isEditMode && (
             <div>
               <label className="block text-sm font-medium text-content-muted mb-1">
@@ -420,17 +517,27 @@ export function WeekModal({
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-navy-700">
-          {isEditMode && onDelete ? (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="px-4 py-2 text-status-error hover:bg-status-error/10 rounded-lg font-medium transition-colors disabled:opacity-50"
-            >
-              {isDeleting ? 'Deleting...' : 'Delete Week'}
-            </button>
-          ) : (
-            <div />
-          )}
+          <div className="flex items-center gap-2">
+            {isEditMode && onDelete && (
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="px-4 py-2 text-status-error hover:bg-status-error/10 rounded-lg font-medium transition-colors disabled:opacity-50"
+              >
+                {isDeleting ? 'Deleting...' : 'Delete Week'}
+              </button>
+            )}
+            {isEditMode && onCopyToQuarter && !showCopyPanel && (
+              <button
+                onClick={() => setShowCopyPanel(true)}
+                className="flex items-center gap-1.5 px-3 py-2 text-content-muted hover:text-accent-blue hover:bg-navy-700 rounded-lg text-sm font-medium transition-colors"
+              >
+                <Copy size={14} />
+                Copy to Quarter
+              </button>
+            )}
+            {!isEditMode && !onDelete && <div />}
+          </div>
 
           <div className="flex items-center gap-2">
             <button

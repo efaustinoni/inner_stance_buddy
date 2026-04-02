@@ -8,7 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- 2026-03-29: CSV import now supports optional `label_N` columns for proper sub-question labels (e.g. `1a`, `1b`, `2a`)
+- 2026-04-02: Quarter aggregation for weeks
+  - New `exercise_quarters` table with user-defined labels (e.g. "2026-Q2", "Q2 - Effectiveness")
+  - Weeks can optionally belong to a quarter; existing weeks are preserved as "Unassigned"
+  - `UNIQUE(user_id, week_number)` constraint replaced with `UNIQUE(user_id, quarter_id, week_number)` — same week number allowed across different quarters
+  - **QuarterModal**: create, edit and delete quarters with duplicate label validation
+  - **WeekModal**: quarter selector on create and edit; changing quarter on edit performs a Move
+  - **WeekModal**: "Copy to Quarter" button with target quarter picker and "Include answers" checkbox
+  - **WeekSelector**: quarter badge filter row to show only weeks from a selected quarter; unassigned weeks flagged with "(no quarter)"
+  - **DashboardPage**: quarter filter dropdown; questions grouped by quarter then by week with collapsible quarter headers
+  - **PowerPage**: "Manage Quarters" button to open QuarterModal
+  - New service functions: `fetchUserQuarters`, `createQuarter`, `updateQuarter`, `deleteQuarter`, `moveWeekToQuarter`, `copyWeekToQuarter`
+- 2026-03-29: CSV import now supports optional `label_N` columns
   - If `label_N` is omitted the parser falls back to `Vraag N` (fully backward compatible)
   - Updated CSV format hint in the Bulk Import modal to document `label_N` and `|` separator usage
   - Multi-part answers can be separated with `|` and will be displayed on individual lines in the answer field

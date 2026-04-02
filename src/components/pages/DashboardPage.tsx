@@ -2,11 +2,13 @@
 // Last Updated: 2026-02-13 18:30
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings } from 'lucide-react';
+import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings, ChevronDown } from 'lucide-react';
 import { Card } from '../ui/Card';
 import {
   fetchDashboardData,
+  fetchUserQuarters,
   type ExerciseWeek,
+  type ExerciseQuarter,
   type DashboardQuestion
 } from '../../lib/exerciseService';
 
@@ -18,11 +20,14 @@ type FilterMode = 'all' | 'tracked' | 'untracked';
 
 export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [weeks, setWeeks] = useState<ExerciseWeek[]>([]);
+  const [quarters, setQuarters] = useState<ExerciseQuarter[]>([]);
   const [questions, setQuestions] = useState<DashboardQuestion[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
+  const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [collapsedQuarters, setCollapsedQuarters] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     loadData();
@@ -30,14 +35,30 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   const loadData = async () => {
     setLoading(true);
-    const data = await fetchDashboardData();
+    const [data, quartersData] = await Promise.all([fetchDashboardData(), fetchUserQuarters()]);
     setWeeks(data.weeks);
     setQuestions(data.questions);
+    setQuarters(quartersData);
     setLoading(false);
+  };
+
+  const toggleQuarterCollapse = (key: string) => {
+    setCollapsedQuarters(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   };
 
   const filteredQuestions = useMemo(() => {
     let result = questions;
+
+    if (selectedQuarter === '__unassigned__') {
+      result = result.filter(q => !q.quarter_id);
+    } else if (selectedQuarter) {
+      result = result.filter(q => q.quarter_id === selectedQuarter);
+    }
 
     if (selectedWeek) {
       result = result.filter(q => q.week_id === selectedWeek);
@@ -68,24 +89,43 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     return { total, answered, tracked };
   }, [questions]);
 
-  const groupedByWeek = useMemo(() => {
-    const groups: Map<number, DashboardQuestion[]> = new Map();
+  // Group by quarter then by week_id (not week_number, since same number can appear in multiple quarters)
+  const groupedByQuarterAndWeek = useMemo(() => {
+    const quarterGroups: Map<string, { label: string; weeks: Map<string, { weekNumber: number; topic: string; questions: DashboardQuestion[] }> }> = new Map();
+
     filteredQuestions.forEach(q => {
-      if (!groups.has(q.week_number)) {
-        groups.set(q.week_number, []);
+      const qKey = q.quarter_id ?? '__unassigned__';
+      const qLabel = q.quarter_label ?? 'Unassigned';
+
+      if (!quarterGroups.has(qKey)) {
+        quarterGroups.set(qKey, { label: qLabel, weeks: new Map() });
       }
-      groups.get(q.week_number)!.push(q);
+
+      const weekMap = quarterGroups.get(qKey)!.weeks;
+      if (!weekMap.has(q.week_id)) {
+        weekMap.set(q.week_id, { weekNumber: q.week_number, topic: q.week_topic, questions: [] });
+      }
+      weekMap.get(q.week_id)!.questions.push(q);
     });
-    return Array.from(groups.entries()).sort((a, b) => a[0] - b[0]);
-  }, [filteredQuestions]);
+
+    // Sort: assigned quarters by creation order, unassigned last
+    return Array.from(quarterGroups.entries()).sort((a, b) => {
+      if (a[0] === '__unassigned__') return 1;
+      if (b[0] === '__unassigned__') return -1;
+      const ai = quarters.findIndex(q => q.id === a[0]);
+      const bi = quarters.findIndex(q => q.id === b[0]);
+      return ai - bi;
+    });
+  }, [filteredQuestions, quarters]);
 
   const clearFilters = () => {
     setSelectedWeek(null);
+    setSelectedQuarter(null);
     setFilterMode('all');
     setSearchQuery('');
   };
 
-  const hasActiveFilters = selectedWeek || filterMode !== 'all' || searchQuery.trim();
+  const hasActiveFilters = selectedWeek || selectedQuarter || filterMode !== 'all' || searchQuery.trim();
 
   if (loading) {
     return (
@@ -161,17 +201,32 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           </div>
 
           <div className="flex gap-2">
+            {quarters.length > 0 && (
+              <select
+                value={selectedQuarter || ''}
+                onChange={(e) => { setSelectedQuarter(e.target.value || null); setSelectedWeek(null); }}
+                className="px-3 py-2.5 bg-navy-800 border border-navy-700 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue transition-colors"
+              >
+                <option value="">All Quarters</option>
+                {quarters.map(q => (
+                  <option key={q.id} value={q.id}>{q.label}</option>
+                ))}
+                <option value="__unassigned__">Unassigned</option>
+              </select>
+            )}
             <select
               value={selectedWeek || ''}
               onChange={(e) => setSelectedWeek(e.target.value || null)}
               className="px-3 py-2.5 bg-navy-800 border border-navy-700 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue transition-colors"
             >
               <option value="">All Weeks</option>
-              {weeks.map(week => (
-                <option key={week.id} value={week.id}>
-                  Week {week.week_number} - {week.topic}
-                </option>
-              ))}
+              {weeks
+                .filter(w => !selectedQuarter || (selectedQuarter === '__unassigned__' ? !w.quarter_id : w.quarter_id === selectedQuarter))
+                .map(week => (
+                  <option key={week.id} value={week.id}>
+                    Week {week.week_number} - {week.topic}
+                  </option>
+                ))}
             </select>
 
             <div className="flex bg-navy-800 border border-navy-700 rounded-lg overflow-hidden">
@@ -212,6 +267,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         {hasActiveFilters && (
           <div className="flex items-center gap-2 mt-3 pt-3 border-t border-navy-700">
             <span className="text-xs text-content-muted">Active filters:</span>
+            {selectedQuarter && (
+              <span className="px-2 py-1 text-xs bg-accent-gold/20 text-accent-gold rounded">
+                {selectedQuarter === '__unassigned__' ? 'Unassigned' : quarters.find(q => q.id === selectedQuarter)?.label}
+              </span>
+            )}
             {selectedWeek && (
               <span className="px-2 py-1 text-xs bg-navy-700 text-content-inverse rounded">
                 Week {weeks.find(w => w.id === selectedWeek)?.week_number}
@@ -257,30 +317,63 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
           )}
         </Card>
       ) : (
-        <div className="space-y-6">
-          {groupedByWeek.map(([weekNumber, weekQuestions]) => {
-            const week = weeks.find(w => w.week_number === weekNumber);
-            return (
-              <div key={weekNumber}>
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="px-2 py-1 text-xs font-medium bg-accent-gold/20 text-accent-gold rounded">
-                    Week {weekNumber}
-                  </span>
-                  <span className="text-sm text-content-muted">{week?.topic}</span>
-                  <span className="text-xs text-content-muted ml-auto">
-                    {weekQuestions.length} question{weekQuestions.length !== 1 ? 's' : ''}
-                  </span>
-                </div>
+        <div className="space-y-8">
+          {groupedByQuarterAndWeek.map(([quarterKey, { label: quarterLabel, weeks: weekMap }]) => {
+            const isCollapsed = collapsedQuarters.has(quarterKey);
+            const weekEntries = Array.from(weekMap.entries()).sort((a, b) => a[1].weekNumber - b[1].weekNumber);
+            const totalQuestions = weekEntries.reduce((sum, [, w]) => sum + w.questions.length, 0);
 
-                <div className="space-y-2">
-                  {weekQuestions.map(question => (
-                    <QuestionCard
-                      key={question.id}
-                      question={question}
-                      onNavigate={onNavigate}
-                    />
-                  ))}
-                </div>
+            return (
+              <div key={quarterKey}>
+                {/* Quarter header */}
+                <button
+                  onClick={() => toggleQuarterCollapse(quarterKey)}
+                  className="flex items-center gap-3 w-full mb-4 group"
+                >
+                  <span className={`px-3 py-1 text-sm font-semibold rounded-lg ${
+                    quarterKey === '__unassigned__'
+                      ? 'bg-navy-700 text-content-muted'
+                      : 'bg-accent-gold/20 text-accent-gold'
+                  }`}>
+                    {quarterLabel}
+                  </span>
+                  <span className="text-xs text-content-muted">
+                    {weekEntries.length} week{weekEntries.length !== 1 ? 's' : ''} · {totalQuestions} question{totalQuestions !== 1 ? 's' : ''}
+                  </span>
+                  <ChevronDown
+                    size={16}
+                    className={`ml-auto text-content-muted transition-transform group-hover:text-content-inverse ${
+                      isCollapsed ? '-rotate-90' : ''
+                    }`}
+                  />
+                </button>
+
+                {!isCollapsed && (
+                  <div className="space-y-6">
+                    {weekEntries.map(([weekId, { weekNumber, topic, questions: wqs }]) => (
+                      <div key={weekId}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="px-2 py-1 text-xs font-medium bg-navy-700 text-content-inverse rounded">
+                            Week {weekNumber}
+                          </span>
+                          <span className="text-sm text-content-muted">{topic}</span>
+                          <span className="text-xs text-content-muted ml-auto">
+                            {wqs.length} question{wqs.length !== 1 ? 's' : ''}
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {wqs.map(question => (
+                            <QuestionCard
+                              key={question.id}
+                              question={question}
+                              onNavigate={onNavigate}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}
