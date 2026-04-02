@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 19:06 UTC: Auto-update fix — users now always get latest version without hard refresh
+  - Added `public/_headers` with `Cache-Control: no-cache` for HTML and `/` to prevent Netlify CDN from caching the entry point
+  - Rewrote service worker: network-first for HTML navigation, cache-first for hashed `/assets/*`, `skipWaiting` + `clients.claim` for instant activation
+  - Service worker cache name tied to app version so old caches are purged on each release
 - 2026-04-02 18:22 UTC: Added docs/USER_GUIDE.md with beta user guide including privacy and encryption section
 - 2026-04-02 18:06 UTC: Column encryption for user data privacy
   - Sensitive columns encrypted at rest using pgcrypto + Supabase Vault: `exercise_answers.answer_text`, `exercise_questions.question_text`, `exercise_questions.question_label`, `progress_check_ins.notes`

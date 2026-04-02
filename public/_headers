@@ -1,0 +1,18 @@
+/*
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+
+# HTML files: never cache so users always get the latest version
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+/
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+
+# Hashed JS/CSS/images: safe to cache forever (filename changes with each build)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
