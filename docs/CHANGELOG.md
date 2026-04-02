@@ -25,7 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-part answers can be separated with `|` and will be displayed on individual lines in the answer field
 
 ### Fixed
-- 2026-03-29: WeekModal CSV parser was a separate, outdated implementation
+- 2026-04-02: Quarter management only allowed adding new quarters, not editing or deleting
+  - QuarterModal redesigned as a full management panel listing all quarters with inline rename and delete per row
+  - PowerPage handlers updated to match the new interface
+- 2026-04-02: Unassigned weeks could not be assigned to a quarter from the dashboard
+  - Added "Assign to quarter..." dropdown on each unassigned week header in the dashboard
+  - Selecting a quarter immediately moves the week and refreshes the view
+- 2026-04-02: WeekModal CSV parser was a separate, outdated implementation
   - Only supported 6 questions (now 10)
   - Only supported `answer_Na/Nb` sub-letter format (now supports `answer_N` directly)
   - Did not support `label_N`, `|` separators, BOM, or `thema` header
