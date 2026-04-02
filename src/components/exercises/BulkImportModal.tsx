@@ -309,8 +309,12 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
       const { base64, mimeType } = await compressAndEncodeImage(file);
       const result = await extractQuestionsFromImage(base64, mimeType);
 
-      if (!result || result.questions.length === 0) {
-        setParseError('No questions could be extracted from the image. Try a clearer photo or a different image.');
+      if (result === null) {
+        setParseError('Extraction failed — check the Supabase edge function logs for details (model may not support vision, or API key invalid).');
+        return;
+      }
+      if (result.questions.length === 0) {
+        setParseError('The AI returned no questions. Try a different image or check that the model supports vision inputs.');
         return;
       }
 
@@ -321,7 +325,7 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
       });
     } catch (err) {
       console.error('[BulkImportModal] Image extraction error:', err);
-      setParseError('Failed to extract questions. Check your internet connection and try again.');
+      setParseError(`Extraction error: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setIsExtracting(false);
     }
