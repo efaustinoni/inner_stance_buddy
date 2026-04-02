@@ -404,8 +404,8 @@ export default function AuthPage() {
             </button>
             {showHowItWorks && (
               <ul className="px-4 pb-4 space-y-2 text-sm text-gray-600">
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">1.</span>Your coach gives you weekly exercises — import them by photo, CSV or paste.</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">2.</span>Write your answers and personal reflections directly in the app.</li>
+                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">1.</span>After completing your exercises in your Inner Stance platform you can upload them here for a full overview.</li>
+                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">2.</span>Optionally add more actions or reflections from the call directly in this app.</li>
                 <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">3.</span>Track daily habits — check off exercises every day and add notes.</li>
                 <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">4.</span>Organise everything by quarter so each period of the program has its own space.</li>
                 <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">5.</span>Your answers are encrypted — only you can read them.</li>
