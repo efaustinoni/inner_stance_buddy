@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-13 18:30
+// Last Updated: 2026-04-02 (fix quarter filter dependency)
 
 import { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings, ChevronDown } from 'lucide-react';
@@ -86,7 +86,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     }
 
     return result;
-  }, [questions, selectedWeek, filterMode, searchQuery]);
+  }, [questions, selectedQuarter, selectedWeek, filterMode, searchQuery]);
 
   const stats = useMemo(() => {
     const total = questions.length;
