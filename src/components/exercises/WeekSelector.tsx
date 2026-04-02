@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02
+// Last Updated: 2026-04-02 17:28 UTC (show quarter label in dropdown)
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Settings, Check } from 'lucide-react';
@@ -112,7 +112,9 @@ export function WeekSelector({
             className="flex items-center gap-3 px-4 py-2.5 bg-navy-800 rounded-xl hover:bg-navy-700 transition-colors min-w-[200px]"
           >
             <div className="flex-1 text-left">
-              <div className="text-xs text-content-muted uppercase tracking-wide">Current Week</div>
+              <div className="text-xs text-content-muted uppercase tracking-wide">
+                {selectedWeek?.quarter_label ?? 'Unassigned'}
+              </div>
               <div className="text-lg font-semibold text-accent-gold">
                 Week {selectedWeek?.week_number}: {selectedWeek?.topic}
               </div>
@@ -139,12 +141,13 @@ export function WeekSelector({
                         : 'text-content-inverse hover:bg-navy-700'
                     }`}
                   >
-                    <div className="flex-1">
-                      <div className="font-medium">Week {week.week_number}</div>
-                      <div className="text-sm text-content-muted">
-                        {week.topic}
-                        {!week.quarter_id && hasQuarters && (
-                          <span className="ml-2 text-xs text-status-error/70">(no quarter)</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-medium">Week {week.week_number}: {week.topic}</div>
+                      <div className="text-xs text-content-muted mt-0.5">
+                        {week.quarter_label ? (
+                          <span className="text-accent-gold/80">{week.quarter_label}</span>
+                        ) : (
+                          <span className="text-content-muted/60">No quarter</span>
                         )}
                       </div>
                     </div>

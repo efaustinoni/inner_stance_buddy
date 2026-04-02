@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 17:28 UTC: WeekSelector dropdown now shows quarter label for each week (gold text) and displays the current quarter in the trigger button subtitle
 - 2026-04-02 16:34 UTC: Dashboard week improvements
   - Each week row is now collapsible/expandable (click the week header to toggle questions)
   - Quarter selector shown on every week (not just unassigned), allowing quarter reassignment directly from the dashboard
