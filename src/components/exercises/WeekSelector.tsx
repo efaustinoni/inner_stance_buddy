@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 17:28 UTC (show quarter label in dropdown)
+// Last Updated: 2026-04-02 20:39 UTC (auto-select first week when quarter filter changes)
 
 import { useState, useRef, useEffect } from 'react';
 import { ChevronDown, Plus, Settings, Check } from 'lucide-react';
@@ -32,6 +32,19 @@ export function WeekSelector({
     : activeQuarterId
     ? weeks.filter(w => w.quarter_id === activeQuarterId)
     : weeks;
+
+  const applyQuarterFilter = (newFilter: string | 'unassigned' | null) => {
+    setActiveQuarterId(newFilter);
+    // If the currently selected week is not in the new filtered set, auto-select the first one
+    const newFiltered = newFilter === null
+      ? weeks
+      : newFilter === 'unassigned'
+      ? weeks.filter(w => !w.quarter_id)
+      : weeks.filter(w => w.quarter_id === newFilter);
+    if (newFiltered.length > 0 && !newFiltered.find(w => w.id === selectedWeekId)) {
+      onSelectWeek(newFiltered[0].id);
+    }
+  };
 
   const hasUnassigned = weeks.some(w => !w.quarter_id);
   const hasQuarters = quarters.length > 0;
@@ -68,7 +81,7 @@ export function WeekSelector({
       {(hasQuarters || hasUnassigned) && (
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={() => setActiveQuarterId(null)}
+            onClick={() => applyQuarterFilter(null)}
             className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
               activeQuarterId === null
                 ? 'bg-accent-blue text-white'
@@ -80,7 +93,7 @@ export function WeekSelector({
           {quarters.map(q => (
             <button
               key={q.id}
-              onClick={() => setActiveQuarterId(activeQuarterId === q.id ? null : q.id)}
+              onClick={() => applyQuarterFilter(activeQuarterId === q.id ? null : q.id)}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 activeQuarterId === q.id
                   ? 'bg-accent-gold text-navy-900'
@@ -92,7 +105,7 @@ export function WeekSelector({
           ))}
           {hasUnassigned && (
             <button
-              onClick={() => setActiveQuarterId(activeQuarterId === 'unassigned' ? null : 'unassigned')}
+              onClick={() => applyQuarterFilter(activeQuarterId === 'unassigned' ? null : 'unassigned')}
               className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
                 activeQuarterId === 'unassigned'
                   ? 'bg-navy-600 text-content-inverse'
