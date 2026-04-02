@@ -1,7 +1,7 @@
 # Exercise Journal — Beta User Guide
 
 ## What is this app?
-Exercise Journal is your personal companion to the Inner Stance coaching program. During your sessions you receive exercises and reflection questions each week. This app gives you **one place per quarter** to store them, write your answers, add personal notes, and track your daily progress — so nothing gets lost between sessions.
+Exercise Journal is your personal companion to the Inner Stance coaching program. During your sessions you receive exercises and reflection questions each week. This app gives you **one place per quarter** to store them, save or update your answers, add personal notes, and track your daily progress — so nothing gets lost between sessions. 
 
 ---
 
