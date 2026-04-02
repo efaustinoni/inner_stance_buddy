@@ -559,17 +559,29 @@ export async function extractQuestionsFromImage(
     return null;
   }
 
-  const { data, error } = await supabase.functions.invoke('extract-questions-from-image', {
-    body: { imageBase64, mimeType },
-    headers: {
-      Authorization: `Bearer ${session.access_token}`,
-    },
-  });
-
-  if (error) {
-    console.error('[extractQuestionsFromImage] Edge function error:', error);
+  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-questions-from-image`;
+  let response: Response;
+  try {
+    response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageBase64, mimeType }),
+    });
+  } catch (fetchError) {
+    console.error('[extractQuestionsFromImage] Network error:', fetchError);
     return null;
   }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[extractQuestionsFromImage] HTTP ${response.status}:`, errorText);
+    return null;
+  }
+
+  const data = await response.json();
 
   if (!data || !Array.isArray(data.questions)) {
     console.error('[extractQuestionsFromImage] Unexpected response shape:', data);
