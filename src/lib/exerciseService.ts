@@ -553,8 +553,17 @@ export async function extractQuestionsFromImage(
   imageBase64: string,
   mimeType: string
 ): Promise<ImageExtractedData | null> {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) {
+    console.error('[extractQuestionsFromImage] No active session');
+    return null;
+  }
+
   const { data, error } = await supabase.functions.invoke('extract-questions-from-image', {
     body: { imageBase64, mimeType },
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+    },
   });
 
   if (error) {
