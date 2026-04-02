@@ -2,7 +2,7 @@
 // Last updated: 2026-02-07
 
 export const appConfig = {
-  versionLabel: 'v.1.1.0 Beta Version',
+  versionLabel: 'v.1.2.0 Beta',
   branding: {
     appName: 'Your App Name',
     appInitials: 'YAN',
