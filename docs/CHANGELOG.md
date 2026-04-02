@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-02 18:22 UTC: Added docs/USER_GUIDE.md with beta user guide including privacy and encryption section
 - 2026-04-02 18:06 UTC: Column encryption for user data privacy
   - Sensitive columns encrypted at rest using pgcrypto + Supabase Vault: `exercise_answers.answer_text`, `exercise_questions.question_text`, `exercise_questions.question_label`, `progress_check_ins.notes`
   - Admin sees only encrypted ciphertext in Table Editor and SQL Editor
