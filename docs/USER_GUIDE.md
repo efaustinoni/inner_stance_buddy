@@ -38,6 +38,17 @@ Go to **Manage Weeks → Add New Week** and choose a mode.
 
 ---
 
+## Manage Weeks
+All your weeks are listed here, grouped by the selected quarter filter.
+
+- **Quarter badges** at the top filter the list — click one to show only that quarter's weeks.
+- Each **week row** starts collapsed — click it to expand and see its questions.
+- The **gear icon** (⚙) on each row opens the edit menu for that week.
+- Use **Collapse All** (top right) to collapse all open weeks at once.
+- **Add Question** and **Bulk Import** buttons appear inside each expanded week.
+
+---
+
 ## Dashboard
 Your central overview of all exercises across the program.
 

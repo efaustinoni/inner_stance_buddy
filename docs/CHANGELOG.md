@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- 2026-04-03 07:43 UTC: Manage Weeks redesigned as collapsible week list (v1.4.0)
+  - All weeks of the selected quarter shown as a list; each starts collapsed
+  - Click a week header to expand and see its questions (loaded on demand)
+  - Collapse All button in the header when any week is open
+  - Quarter badge filter resets all weeks to collapsed
+  - New week auto-expands after creation
+  - Per-week Add Question and Bulk Import buttons inside each expanded row
+  - Edit week via gear icon on each row header
+  - WeekSelector simplified to quarter badge filter only (dropdown removed)
+- 2026-04-02 20:43 UTC: Dashboard — weeks reset to expanded when quarter or week filter changes (v1.3.5)
+- 2026-04-02 20:31 UTC: Sign-in/sign-up page "How it works" section populated with 5 steps (v1.3.2/v1.3.3)
+- 2026-04-02 20:25 UTC: Security Definer View warnings resolved — set `security_invoker=true` on all decrypted views (v1.3.1 hotfix)
 - 2026-04-02 20:16 UTC: Frontend switched to decrypted views — encryption fully active, data displayed correctly again (v1.3.1)
 - 2026-04-02 19:06 UTC: Auto-update fix — users now always get latest version without hard refresh
   - Added `public/_headers` with `Cache-Control: no-cache` for HTML and `/` to prevent Netlify CDN from caching the entry point
