@@ -59,6 +59,15 @@ If a deployment breaks the app:
 
 ---
 
+## Version bumping
+When bumping the version, always update **both** of these together in the same commit:
+1. `src/lib/appConfig.ts` — `versionLabel: 'v.X.Y.Z Beta'`
+2. `public/service-worker.js` — `const CACHE_NAME = 'exercise-journal-vX.Y.Z'`
+
+If the service worker cache name is not updated, users' browsers will keep serving the old bundle and the version badge will show the wrong number.
+
+---
+
 ## Lessons learned
 
 | Date | Lesson |

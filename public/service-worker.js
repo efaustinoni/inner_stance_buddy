@@ -1,6 +1,6 @@
 // Cache name includes the app version — bumping the version here clears old caches.
-// This value is updated automatically on each release.
-const CACHE_NAME = 'exercise-journal-v1.3.0';
+// IMPORTANT: keep this in sync with appConfig.versionLabel in src/lib/appConfig.ts
+const CACHE_NAME = 'exercise-journal-v1.4.0';
 
 // Only pre-cache the app shell (not index.html — that must always be fresh).
 const PRECACHE_URLS = [];
