@@ -7,63 +7,101 @@ echo ""
 echo "▶️  Running pre-push checks..."
 echo ""
 
-# ── Sequential phase 1: Documentation audit ──────────────────────────────────
+# ── Phase 0: Secret scanning (sequential, blocks) ─────────────────────────────
+echo "── Phase 0: Secret scanning ──"
+bash "$REPO_ROOT/scripts/secrets-scan.sh"
+
+# ── Phase 1: Documentation audit (sequential, blocks) ────────────────────────
+echo ""
 echo "── Phase 1/2 (sequential): Documentation audit ──"
 bash "$REPO_ROOT/scripts/docs-audit.sh"
 
-# ── Sequential phase 2: Test coverage audit ──────────────────────────────────
+# ── Phase 2: Test file audit (sequential, blocks) ────────────────────────────
 echo ""
 echo "── Phase 2/2 (sequential): Test coverage audit ──"
 bash "$REPO_ROOT/scripts/test-audit.sh"
 
 # ── Parallel phase ────────────────────────────────────────────────────────────
 echo ""
-echo "── Parallel phase (TypeScript · ESLint · Vitest · Prettier) ──"
+echo "── Parallel phase (TypeScript · ESLint · Vitest+Coverage · Build · Prettier) ──"
 echo ""
 
 TSC_LOG=$(mktemp)
 ESL_LOG=$(mktemp)
 TEST_LOG=$(mktemp)
+BLD_LOG=$(mktemp)
 PRT_LOG=$(mktemp)
+KNP_LOG=$(mktemp)
 
-trap 'rm -f "$TSC_LOG" "$ESL_LOG" "$TEST_LOG" "$PRT_LOG"' EXIT
+trap 'rm -f "$TSC_LOG" "$ESL_LOG" "$TEST_LOG" "$BLD_LOG" "$PRT_LOG" "$KNP_LOG"' EXIT
 
-(cd "$REPO_ROOT" && npx tsc -p tsconfig.app.json --noEmit) > "$TSC_LOG" 2>&1 & TSC_PID=$!
-(cd "$REPO_ROOT" && npx eslint .) > "$ESL_LOG" 2>&1 & ESL_PID=$!
-(cd "$REPO_ROOT" && npm test) > "$TEST_LOG" 2>&1 & TEST_PID=$!
-(cd "$REPO_ROOT" && npx prettier --check .) > "$PRT_LOG" 2>&1 & PRT_PID=$!
+(cd "$REPO_ROOT" && npx tsc -p tsconfig.app.json --noEmit)  > "$TSC_LOG"  2>&1 & TSC_PID=$!
+(cd "$REPO_ROOT" && npx eslint .)                            > "$ESL_LOG"  2>&1 & ESL_PID=$!
+(cd "$REPO_ROOT" && npx vitest run --coverage)               > "$TEST_LOG" 2>&1 & TEST_PID=$!
+(cd "$REPO_ROOT" && npm run build)                           > "$BLD_LOG"  2>&1 & BLD_PID=$!
+(cd "$REPO_ROOT" && npx prettier --check .)                  > "$PRT_LOG"  2>&1 & PRT_PID=$!
+(cd "$REPO_ROOT" && npx knip)                                > "$KNP_LOG"  2>&1 & KNP_PID=$!
 
 FAIL=0
-wait $TSC_PID || { echo "❌ TypeScript errors:"; cat "$TSC_LOG"; FAIL=1; }
-wait $ESL_PID || { echo ""; echo "❌ ESLint errors:"; cat "$ESL_LOG"; FAIL=1; }
-wait $TEST_PID || { echo ""; echo "❌ Test failures:"; cat "$TEST_LOG"; FAIL=1; }
-wait $PRT_PID || { echo ""; echo "❌ Prettier issues:"; cat "$PRT_LOG"; FAIL=1; }
+wait $TSC_PID  || { echo "❌ TypeScript errors:";             cat "$TSC_LOG";  FAIL=1; }
+wait $ESL_PID  || { echo ""; echo "❌ ESLint errors:";        cat "$ESL_LOG";  FAIL=1; }
+wait $TEST_PID || { echo ""; echo "❌ Tests/coverage failed:"; cat "$TEST_LOG"; FAIL=1; }
+wait $BLD_PID  || { echo ""; echo "❌ Build failed:";          cat "$BLD_LOG";  FAIL=1; }
+wait $PRT_PID  || { echo ""; echo "❌ Prettier issues:";       cat "$PRT_LOG";  FAIL=1; }
+wait $KNP_PID  || { echo ""; echo "⚠️  Dead code / unused exports (advisory):"; cat "$KNP_LOG"; }
 
 [ $FAIL -eq 1 ] && exit 1
 
 echo ""
 echo "✅ All parallel checks passed."
 
-# ── Security audit ────────────────────────────────────────────────────────────
+# ── npm security audit (prod: blocks, dev: advisory) ─────────────────────────
 echo ""
 echo "── Security audit ──"
-
 cd "$REPO_ROOT"
 
 echo "Checking production dependencies for high/critical vulnerabilities..."
 if ! npm audit --omit=dev --audit-level=high 2>&1; then
   echo ""
-  echo "❌ High or critical vulnerabilities found in production dependencies. Push blocked."
+  echo "❌ High or critical vulnerabilities in production dependencies. Push blocked."
   exit 1
 fi
 echo "✅ No high/critical vulnerabilities in production dependencies."
 
 echo ""
-echo "Checking all dependencies (dev advisory — never blocks)..."
+echo "Checking all dependencies (dev advisory)..."
 npm audit --audit-level=critical 2>&1 || true
-echo "⚠️  Dev dependency audit above is advisory only — push not blocked."
+echo "⚠️  Dev dependency audit above is advisory only."
 
-# ── File size audit ───────────────────────────────────────────────────────────
+# ── License check (advisory) ──────────────────────────────────────────────────
+echo ""
+echo "── Dependency license check (advisory) ──"
+ALLOWED="MIT;ISC;Apache-2.0;BSD-2-Clause;BSD-3-Clause;CC0-1.0;Unlicense;0BSD;Python-2.0;BlueOak-1.0.0"
+npx license-checker --production --onlyAllow "$ALLOWED" 2>&1 \
+  && echo "✅ All production dependency licenses approved." \
+  || echo "⚠️  License issue found — review output above (advisory)."
+
+# ── Unused dependency check (advisory) ────────────────────────────────────────
+echo ""
+echo "── Unused dependency check (advisory) ──"
+npx depcheck 2>&1 || echo "⚠️  Unused dependencies found — review above (advisory)."
+
+# ── E2E tests (conditional) ───────────────────────────────────────────────────
+echo ""
+echo "── E2E tests ──"
+if [ "${E2E_ENABLED:-0}" = "1" ]; then
+  echo "Running Playwright E2E suite..."
+  if ! (cd "$REPO_ROOT" && npx playwright test) 2>&1; then
+    echo "❌ E2E tests failed. Push blocked."
+    exit 1
+  fi
+  echo "✅ E2E tests passed."
+else
+  echo "⚠️  E2E skipped locally. Run 'E2E_ENABLED=1 git push' to enable."
+  echo "   CI should always set E2E_ENABLED=1."
+fi
+
+# ── File size audit (advisory) ────────────────────────────────────────────────
 echo ""
 echo "── File size audit (advisory) ──"
 bash "$REPO_ROOT/scripts/file-size-audit.sh"

@@ -6,6 +6,13 @@ import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
   { ignores: ['dist', 'supabase/**', 'scripts/**'] },
+  // E2E tests run in Node — use Node globals to avoid browser-global false positives
+  {
+    files: ['e2e/**/*.{ts,tsx}'],
+    languageOptions: {
+      globals: { ...globals.node, ...globals.browser },
+    },
+  },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
