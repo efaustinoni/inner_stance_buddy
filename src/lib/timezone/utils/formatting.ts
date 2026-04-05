@@ -18,7 +18,7 @@ export function getTimezoneOffset(timezone: string): string {
       timeZoneName: 'shortOffset',
     });
     const parts = formatter.formatToParts(now);
-    const offsetPart = parts.find(p => p.type === 'timeZoneName');
+    const offsetPart = parts.find((p) => p.type === 'timeZoneName');
     if (offsetPart) {
       return offsetPart.value.replace('GMT', 'UTC');
     }

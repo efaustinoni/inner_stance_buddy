@@ -16,7 +16,7 @@ interface LegalPageProps {
 }
 
 export default function LegalPage({ type }: LegalPageProps) {
-  const [manifest, setManifest] = useState<LegalManifest | null>(null);
+  const [, setManifest] = useState<LegalManifest | null>(null);
   const [document, setDocument] = useState<LegalDocument | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);

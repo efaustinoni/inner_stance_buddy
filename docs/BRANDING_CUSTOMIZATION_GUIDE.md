@@ -22,17 +22,20 @@ export const appConfig = {
 ## Branding Elements
 
 ### 1. Application Name (`appName`)
+
 - **Default:** `'Group Availability'`
 - **Used in:** Header logo, authentication page, page titles, and manifest
 - **How to change:** Update the `appName` value in `appConfig.ts`
 
 ### 2. Application Initials (`appInitials`)
+
 - **Default:** `'GA'`
 - **Used in:** Header logo badge
 - **How to change:** Update the `appInitials` value in `appConfig.ts`
 - **Recommendation:** Keep it 2-3 characters for best visual appearance
 
 ### 3. Logo Icon Path (`logoIconPath`)
+
 - **Default:** `'/webapp_icon.png'`
 - **Used in:** Authentication page logo
 - **How to change:**
@@ -41,6 +44,7 @@ export const appConfig = {
 - **Recommendation:** Use a square image (512x512px or larger) for best results
 
 ### 4. Logo Colors
+
 - **Background Color (`logoBackgroundColor`):** Default `'bg-blue-600'`
 - **Text Color (`logoTextColor`):** Default `'text-white'`
 - **Used in:** Header logo badge background and text
@@ -53,7 +57,9 @@ export const appConfig = {
 ## Additional Files to Customize
 
 ### PWA Manifest (`/public/manifest.json`)
+
 Update the following fields:
+
 - `name`: Full application name (e.g., "Group Availability Planner")
 - `short_name`: Short name for home screen (e.g., "Availability")
 - `description`: App description
@@ -61,10 +67,13 @@ Update the following fields:
 - `background_color`: Background color (hex format)
 
 ### HTML Title (`/index.html`)
+
 Update the `<title>` tag to match your application name.
 
 ### PWA Icons
+
 Replace the following icon files in `/public`:
+
 - `icon-192.png` - 192x192px icon
 - `icon-192-maskable.png` - 192x192px maskable icon (with padding)
 - `icon-512.png` - 512x512px icon
@@ -72,11 +81,13 @@ Replace the following icon files in `/public`:
 - `webapp_icon.png` - Large logo for auth pages
 
 **Icon Requirements:**
+
 - Format: PNG with transparency
 - Maskable icons: Include 20% padding (safe zone) around the main icon
 - Use solid backgrounds for maskable icons to ensure visibility on any background color
 
 ### Favicon (`/public/icon-192.png`)
+
 The `icon-192.png` is also used as the favicon. Update this to match your branding.
 
 ## Quick Start Checklist
@@ -93,6 +104,7 @@ The `icon-192.png` is also used as the favicon. Update this to match your brandi
 ## Theme Color Reference
 
 Common Tailwind CSS color classes for `logoBackgroundColor`:
+
 - Blue: `bg-blue-600`
 - Green: `bg-green-600`
 - Red: `bg-red-600`
@@ -107,6 +119,7 @@ Text color should contrast well with the background. For dark backgrounds, use `
 ## Testing
 
 After making changes:
+
 1. Run `npm run build` to ensure the application builds successfully
 2. Test the application in a browser to verify all branding changes
 3. Test PWA installation to verify icons and names appear correctly

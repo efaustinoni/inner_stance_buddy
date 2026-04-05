@@ -35,12 +35,14 @@ export default function AddToHomeScreenButton() {
   useEffect(() => {
     const standaloneQuery = window.matchMedia('(display-mode: standalone)');
     const isInStandaloneMode =
-      standaloneQuery.matches || (window.navigator as any).standalone === true;
+      standaloneQuery.matches ||
+      (window.navigator as Navigator & { standalone?: boolean }).standalone === true;
 
     setIsStandalone(isInStandaloneMode);
 
     const ua = navigator.userAgent.toLowerCase();
-    const isIOS = /iphone|ipad|ipod/.test(ua) && !(window as any).MSStream;
+    const isIOS =
+      /iphone|ipad|ipod/.test(ua) && !(window as Window & { MSStream?: unknown }).MSStream;
     const isAndroid = /android/.test(ua);
 
     if (isIOS) {
@@ -113,9 +115,7 @@ export default function AddToHomeScreenButton() {
 
   const renderIOSInstructions = () => (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600 mb-4">
-        Follow these steps in Safari:
-      </p>
+      <p className="text-sm text-gray-600 mb-4">Follow these steps in Safari:</p>
       <div className="space-y-3">
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-blue-600">
@@ -126,9 +126,7 @@ export default function AddToHomeScreenButton() {
               Tap the Share button
               <Share className="w-5 h-5 text-blue-600" />
             </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Located at the bottom of Safari
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Located at the bottom of Safari</p>
           </div>
         </div>
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -140,9 +138,7 @@ export default function AddToHomeScreenButton() {
               Select "Add to Home Screen"
               <PlusSquare className="w-5 h-5 text-blue-600" />
             </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Scroll down in the share menu
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Scroll down in the share menu</p>
           </div>
         </div>
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -151,9 +147,7 @@ export default function AddToHomeScreenButton() {
           </div>
           <div className="flex-1">
             <p className="font-medium text-gray-900">Tap "Add"</p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Confirm to add the app icon
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Confirm to add the app icon</p>
           </div>
         </div>
       </div>
@@ -162,9 +156,7 @@ export default function AddToHomeScreenButton() {
 
   const renderAndroidInstructions = () => (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600 mb-4">
-        Follow these steps in Chrome:
-      </p>
+      <p className="text-sm text-gray-600 mb-4">Follow these steps in Chrome:</p>
       <div className="space-y-3">
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-blue-600">
@@ -175,9 +167,7 @@ export default function AddToHomeScreenButton() {
               Tap the menu button
               <MoreVertical className="w-5 h-5 text-gray-600" />
             </p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Three dots in the top right corner
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Three dots in the top right corner</p>
           </div>
         </div>
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
@@ -194,9 +184,7 @@ export default function AddToHomeScreenButton() {
           </div>
           <div className="flex-1">
             <p className="font-medium text-gray-900">Tap "Add"</p>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Confirm to add the app icon
-            </p>
+            <p className="text-sm text-gray-500 mt-0.5">Confirm to add the app icon</p>
           </div>
         </div>
       </div>
@@ -205,9 +193,7 @@ export default function AddToHomeScreenButton() {
 
   const renderDesktopInstructions = () => (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600 mb-4">
-        Chrome (Windows):
-      </p>
+      <p className="text-sm text-gray-600 mb-4">Chrome (Windows):</p>
       <div className="space-y-3">
         <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
           <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold text-blue-600">
@@ -250,8 +236,12 @@ export default function AddToHomeScreenButton() {
         <p className="font-bold text-gray-700 mb-2">Debug Info</p>
         <ul className="space-y-1 text-gray-600">
           <li>manifest linked: {debugInfo.manifestLinked ? 'true' : 'false'}</li>
-          <li>service worker controlling: {debugInfo.serviceWorkerControlling ? 'true' : 'false'}</li>
-          <li>beforeinstallprompt fired: {debugInfo.beforeInstallPromptFired ? 'true' : 'false'}</li>
+          <li>
+            service worker controlling: {debugInfo.serviceWorkerControlling ? 'true' : 'false'}
+          </li>
+          <li>
+            beforeinstallprompt fired: {debugInfo.beforeInstallPromptFired ? 'true' : 'false'}
+          </li>
           <li>display-mode: {debugInfo.displayMode}</li>
         </ul>
       </div>
@@ -283,9 +273,7 @@ export default function AddToHomeScreenButton() {
                     <Pin className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Add a shortcut
-                    </h3>
+                    <h3 className="text-lg font-semibold text-gray-900">Add a shortcut</h3>
                     <p className="text-sm text-gray-500">Pin this app for faster access</p>
                   </div>
                 </div>

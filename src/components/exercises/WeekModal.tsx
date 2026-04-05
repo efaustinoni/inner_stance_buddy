@@ -2,7 +2,19 @@
 // Last Updated: 2026-04-02 (add From Image tab)
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { X, Upload, Edit3, Calendar, Tag, AlertCircle, Type, Copy, Image as ImageIcon, Loader2, ScanSearch } from 'lucide-react';
+import {
+  X,
+  Upload,
+  Edit3,
+  Calendar,
+  Tag,
+  AlertCircle,
+  Type,
+  Copy,
+  Image as ImageIcon,
+  Loader2,
+  ScanSearch,
+} from 'lucide-react';
 import { parseExerciseText } from './BulkImportModal';
 import type { ExerciseQuarter } from '../../lib/exerciseService';
 import { extractQuestionsFromImage } from '../../lib/exerciseService';
@@ -16,7 +28,12 @@ export interface ParsedQuestion {
 interface WeekModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (weekNumber: number, topic: string, quarterId: string | null, questions?: ParsedQuestion[]) => Promise<void>;
+  onSave: (
+    weekNumber: number,
+    topic: string,
+    quarterId: string | null,
+    questions?: ParsedQuestion[]
+  ) => Promise<void>;
   onDelete?: () => Promise<void>;
   onCopyToQuarter?: (targetQuarterId: string | null, includeAnswers: boolean) => Promise<void>;
   initialData?: {
@@ -33,7 +50,11 @@ interface WeekModalProps {
 type InputMode = 'manual' | 'csv' | 'text' | 'image';
 
 /** Resize + JPEG-compress an image file, returning base64 (no data-URL prefix). */
-async function compressAndEncodeImage(file: File, maxDim = 2048, quality = 0.85): Promise<{ base64: string; mimeType: string }> {
+async function compressAndEncodeImage(
+  file: File,
+  maxDim = 2048,
+  quality = 0.85
+): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -91,25 +112,35 @@ function parseCSVLine(line: string): string[] {
   return result;
 }
 
-function parseCSV(csvText: string): { weekNumber?: number; theme?: string; questions: ParsedQuestion[] } {
+function parseCSV(csvText: string): {
+  weekNumber?: number;
+  theme?: string;
+  questions: ParsedQuestion[];
+} {
   let text = csvText;
-  if (text.charCodeAt(0) === 0xFEFF) {
+  if (text.charCodeAt(0) === 0xfeff) {
     text = text.slice(1);
   }
 
-  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  const lines = text.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) {
     return { questions: [] };
   }
 
   const rawHeaders = parseCSVLine(lines[0]);
-  const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/[^a-z0-9_]/g, ''));
+  const headers = rawHeaders.map((h) =>
+    h
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9_]/g, '')
+  );
   const dataLine = parseCSVLine(lines[1]);
 
-  const weekIdx = headers.findIndex(h => h === 'week');
-  const themeIdx = headers.findIndex(h => h === 'theme' || h === 'thema');
+  const weekIdx = headers.findIndex((h) => h === 'week');
+  const themeIdx = headers.findIndex((h) => h === 'theme' || h === 'thema');
 
-  const weekNumber = weekIdx !== -1 && dataLine[weekIdx] ? parseInt(dataLine[weekIdx], 10) : undefined;
+  const weekNumber =
+    weekIdx !== -1 && dataLine[weekIdx] ? parseInt(dataLine[weekIdx], 10) : undefined;
   const theme = themeIdx !== -1 && dataLine[themeIdx] ? dataLine[themeIdx] : undefined;
 
   const questions: ParsedQuestion[] = [];
@@ -128,7 +159,10 @@ function parseCSV(csvText: string): { weekNumber?: number; theme?: string; quest
     const directAnswerIdx = headers.indexOf(directAnswerKey);
 
     if (directAnswerIdx !== -1 && dataLine[directAnswerIdx]) {
-      answer = dataLine[directAnswerIdx].split('|').map((a: string) => a.trim()).join('\n');
+      answer = dataLine[directAnswerIdx]
+        .split('|')
+        .map((a: string) => a.trim())
+        .join('\n');
     } else {
       // Fall back to answer_Na, answer_Nb, etc.
       const subAnswers: string[] = [];
@@ -148,7 +182,8 @@ function parseCSV(csvText: string): { weekNumber?: number; theme?: string; quest
     // Support optional label_N column
     const labelKey = `label_${qNum}`;
     const labelIdx = headers.indexOf(labelKey);
-    const questionLabel = (labelIdx !== -1 && dataLine[labelIdx]) ? dataLine[labelIdx] : `Vraag ${qNum}`;
+    const questionLabel =
+      labelIdx !== -1 && dataLine[labelIdx] ? dataLine[labelIdx] : `Vraag ${qNum}`;
 
     questions.push({
       label: questionLabel,
@@ -174,7 +209,9 @@ export function WeekModal({
   const [inputMode, setInputMode] = useState<InputMode>('manual');
   const [weekNumber, setWeekNumber] = useState(initialData?.week_number || 1);
   const [topic, setTopic] = useState(initialData?.topic || '');
-  const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(initialData?.quarter_id ?? null);
+  const [selectedQuarterId, setSelectedQuarterId] = useState<string | null>(
+    initialData?.quarter_id ?? null
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
@@ -204,9 +241,7 @@ export function WeekModal({
         setSelectedQuarterId(initialData.quarter_id ?? null);
         setInputMode('manual');
       } else {
-        const nextWeek = existingWeekNumbers.length > 0
-          ? Math.max(...existingWeekNumbers) + 1
-          : 1;
+        const nextWeek = existingWeekNumbers.length > 0 ? Math.max(...existingWeekNumbers) + 1 : 1;
         setWeekNumber(nextWeek);
         setTopic('');
         setSelectedQuarterId(null);
@@ -247,7 +282,9 @@ export function WeekModal({
       setCsvQuestions(result.questions);
 
       if (result.questions.length === 0) {
-        setParseError('Could not parse any questions from CSV. Ensure the file has headers like question_1, answer_1a, answer_1b, etc.');
+        setParseError(
+          'Could not parse any questions from CSV. Ensure the file has headers like question_1, answer_1a, answer_1b, etc.'
+        );
       }
     };
     reader.onerror = () => {
@@ -259,7 +296,11 @@ export function WeekModal({
   const handleSave = async () => {
     if (!topic.trim()) return;
     setIsSaving(true);
-    const questionsToImport = (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0 ? csvQuestions : undefined;
+    const questionsToImport =
+      (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') &&
+      csvQuestions.length > 0
+        ? csvQuestions
+        : undefined;
     await onSave(weekNumber, topic.trim(), selectedQuarterId, questionsToImport);
     setIsSaving(false);
     onClose();
@@ -294,7 +335,9 @@ export function WeekModal({
     if (result.weekNumber) setWeekNumber(result.weekNumber);
     if (result.theme) setTopic(result.theme);
     if (result.questions.length === 0) {
-      setParseError('Could not parse any questions. Start each question with a label like "Vraag 1a:" or "1a."');
+      setParseError(
+        'Could not parse any questions. Start each question with a label like "Vraag 1a:" or "1a."'
+      );
     }
   }, []);
 
@@ -315,11 +358,15 @@ export function WeekModal({
       const result = await extractQuestionsFromImage(base64, mimeType);
 
       if (result === null) {
-        setParseError('Extraction failed — check the Supabase edge function logs for details (model may not support vision, or API key invalid).');
+        setParseError(
+          'Extraction failed — check the Supabase edge function logs for details (model may not support vision, or API key invalid).'
+        );
         return;
       }
       if (result.questions.length === 0) {
-        setParseError('The AI returned no questions. Try a different image or check that the model supports vision inputs.');
+        setParseError(
+          'The AI returned no questions. Try a different image or check that the model supports vision inputs.'
+        );
         return;
       }
 
@@ -417,7 +464,6 @@ export function WeekModal({
         )}
 
         <div className="p-4 space-y-4 overflow-y-auto flex-1">
-
           {/* Quarter selector — shown in both create and edit modes */}
           {!showCopyPanel && (
             <div>
@@ -430,12 +476,16 @@ export function WeekModal({
                 className="w-full px-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue"
               >
                 <option value="">— No quarter —</option>
-                {quarters.map(q => (
-                  <option key={q.id} value={q.id}>{q.label}</option>
+                {quarters.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.label}
+                  </option>
                 ))}
               </select>
               {!selectedQuarterId && (
-                <p className="text-xs text-content-muted mt-1">This week will appear as "Unassigned".</p>
+                <p className="text-xs text-content-muted mt-1">
+                  This week will appear as "Unassigned".
+                </p>
               )}
             </div>
           )}
@@ -443,7 +493,9 @@ export function WeekModal({
           {/* Copy to Quarter panel (edit mode only) */}
           {isEditMode && onCopyToQuarter && showCopyPanel && (
             <div className="p-4 bg-navy-900 rounded-lg border border-navy-600 space-y-3">
-              <p className="text-sm font-medium text-content-inverse">Copy week to another quarter</p>
+              <p className="text-sm font-medium text-content-inverse">
+                Copy week to another quarter
+              </p>
               <div>
                 <label className="block text-xs text-content-muted mb-1">Target Quarter</label>
                 <select
@@ -452,8 +504,10 @@ export function WeekModal({
                   className="w-full px-3 py-2 bg-navy-800 border border-navy-600 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue"
                 >
                   <option value="">— No quarter (unassigned) —</option>
-                  {quarters.map(q => (
-                    <option key={q.id} value={q.id}>{q.label}</option>
+                  {quarters.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      {q.label}
+                    </option>
                   ))}
                 </select>
               </div>
@@ -490,7 +544,8 @@ export function WeekModal({
                 Upload Image
               </label>
               <p className="text-xs text-content-muted mb-3">
-                Take a photo of your exercise sheet — AI will extract questions and answers automatically.
+                Take a photo of your exercise sheet — AI will extract questions and answers
+                automatically.
               </p>
               <div
                 onClick={() => !isExtracting && imageInputRef.current?.click()}
@@ -511,7 +566,9 @@ export function WeekModal({
                 {isExtracting ? (
                   <div className="flex flex-col items-center gap-2 py-2">
                     <Loader2 size={28} className="text-accent-blue animate-spin" />
-                    <p className="text-content-inverse font-medium text-sm">Extracting questions…</p>
+                    <p className="text-content-inverse font-medium text-sm">
+                      Extracting questions…
+                    </p>
                     <p className="text-xs text-content-muted">AI is reading your image</p>
                   </div>
                 ) : imagePreviewUrl ? (
@@ -521,13 +578,19 @@ export function WeekModal({
                       alt="Preview"
                       className="max-h-32 rounded-lg object-contain mx-auto"
                     />
-                    <p className="text-content-muted text-xs mt-1">{imageFileName} — click to replace</p>
+                    <p className="text-content-muted text-xs mt-1">
+                      {imageFileName} — click to replace
+                    </p>
                   </div>
                 ) : (
                   <>
                     <ImageIcon size={28} className="mx-auto text-content-muted mb-2" />
-                    <p className="text-content-inverse font-medium">Click to upload or take a photo</p>
-                    <p className="text-xs text-content-muted mt-1">JPG, PNG, HEIC — large images are auto-compressed</p>
+                    <p className="text-content-inverse font-medium">
+                      Click to upload or take a photo
+                    </p>
+                    <p className="text-xs text-content-muted mt-1">
+                      JPG, PNG, HEIC — large images are auto-compressed
+                    </p>
                   </>
                 )}
               </div>
@@ -540,7 +603,8 @@ export function WeekModal({
                 Paste your questions below
               </label>
               <p className="text-xs text-content-muted mb-2">
-                Include "Week: 2" and "Thema: Non-negotiable Targets" to auto-fill week number and topic
+                Include "Week: 2" and "Thema: Non-negotiable Targets" to auto-fill week number and
+                topic
               </p>
               <textarea
                 value={rawText}
@@ -558,7 +622,8 @@ export function WeekModal({
                 Upload CSV File
               </label>
               <p className="text-xs text-content-muted mb-3">
-                CSV format: week, theme, label_1, question_1, answer_1, ... (label_N optional; use | for multi-line answers)
+                CSV format: week, theme, label_1, question_1, answer_1, ... (label_N optional; use |
+                for multi-line answers)
               </p>
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -592,9 +657,7 @@ export function WeekModal({
           )}
 
           <div>
-            <label className="block text-sm font-medium text-content-muted mb-1">
-              Week Number
-            </label>
+            <label className="block text-sm font-medium text-content-muted mb-1">Week Number</label>
             <input
               type="number"
               min="1"
@@ -603,16 +666,12 @@ export function WeekModal({
               className="w-full px-3 py-2 bg-navy-900 border border-navy-600 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue"
             />
             {weekNumberInUse && (
-              <p className="text-xs text-status-error mt-1">
-                Week {weekNumber} already exists
-              </p>
+              <p className="text-xs text-status-error mt-1">Week {weekNumber} already exists</p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-content-muted mb-1">
-              Week Topic
-            </label>
+            <label className="block text-sm font-medium text-content-muted mb-1">Week Topic</label>
             <input
               type="text"
               value={topic}
@@ -622,37 +681,40 @@ export function WeekModal({
             />
           </div>
 
-          {(inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0 && (
-            <div>
-              <div className="flex flex-wrap gap-2 mb-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
-                  <Calendar size={14} className="text-accent-blue" />
-                  <span className="text-sm text-accent-blue font-medium">Week {weekNumber}</span>
+          {(inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') &&
+            csvQuestions.length > 0 && (
+              <div>
+                <div className="flex flex-wrap gap-2 mb-3">
+                  <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
+                    <Calendar size={14} className="text-accent-blue" />
+                    <span className="text-sm text-accent-blue font-medium">Week {weekNumber}</span>
+                  </div>
+                  {topic && (
+                    <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-gold/10 border border-accent-gold/30 rounded-lg">
+                      <Tag size={14} className="text-accent-gold" />
+                      <span className="text-sm text-accent-gold font-medium">{topic}</span>
+                    </div>
+                  )}
                 </div>
-                {topic && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-gold/10 border border-accent-gold/30 rounded-lg">
-                    <Tag size={14} className="text-accent-gold" />
-                    <span className="text-sm text-accent-gold font-medium">{topic}</span>
-                  </div>
-                )}
-              </div>
 
-              <h3 className="text-sm font-medium text-content-inverse mb-2">
-                Questions to Import ({csvQuestions.length})
-              </h3>
-              <div className="space-y-2 max-h-40 overflow-y-auto">
-                {csvQuestions.map((q, index) => (
-                  <div
-                    key={index}
-                    className="p-2.5 bg-navy-900 rounded-lg border border-navy-700"
-                  >
-                    <span className="text-accent-gold font-medium text-sm">{q.label}:</span>{' '}
-                    <span className="text-content-muted text-sm line-clamp-2">{q.text.split('\n')[0]}</span>
-                  </div>
-                ))}
+                <h3 className="text-sm font-medium text-content-inverse mb-2">
+                  Questions to Import ({csvQuestions.length})
+                </h3>
+                <div className="space-y-2 max-h-40 overflow-y-auto">
+                  {csvQuestions.map((q, index) => (
+                    <div
+                      key={index}
+                      className="p-2.5 bg-navy-900 rounded-lg border border-navy-700"
+                    >
+                      <span className="text-accent-gold font-medium text-sm">{q.label}:</span>{' '}
+                      <span className="text-content-muted text-sm line-clamp-2">
+                        {q.text.split('\n')[0]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
         </div>
 
         <div className="flex items-center justify-between p-4 border-t border-navy-700">
@@ -693,12 +755,13 @@ export function WeekModal({
               {isSaving
                 ? 'Saving...'
                 : isExtracting
-                ? 'Extracting...'
-                : isEditMode
-                ? 'Save Changes'
-                : (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') && csvQuestions.length > 0
-                ? `Create Week & Import ${csvQuestions.length} Questions`
-                : 'Create Week'}
+                  ? 'Extracting...'
+                  : isEditMode
+                    ? 'Save Changes'
+                    : (inputMode === 'csv' || inputMode === 'text' || inputMode === 'image') &&
+                        csvQuestions.length > 0
+                      ? `Create Week & Import ${csvQuestions.length} Questions`
+                      : 'Create Week'}
             </button>
           </div>
         </div>

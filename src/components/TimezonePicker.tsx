@@ -63,11 +63,12 @@ export default function TimezonePicker({
     }
 
     const query = searchQuery.toLowerCase();
-    return allTimezones.filter(tz =>
-      tz.value.toLowerCase().includes(query) ||
-      tz.label.toLowerCase().includes(query) ||
-      tz.country.toLowerCase().includes(query) ||
-      tz.continent.toLowerCase().includes(query)
+    return allTimezones.filter(
+      (tz) =>
+        tz.value.toLowerCase().includes(query) ||
+        tz.label.toLowerCase().includes(query) ||
+        tz.country.toLowerCase().includes(query) ||
+        tz.continent.toLowerCase().includes(query)
     );
   }, [searchQuery, allTimezones]);
 
@@ -78,7 +79,7 @@ export default function TimezonePicker({
   };
 
   const toggleContinent = (continent: string) => {
-    setExpandedContinents(prev => {
+    setExpandedContinents((prev) => {
       const next = new Set(prev);
       if (next.has(continent)) {
         next.delete(continent);
@@ -90,7 +91,7 @@ export default function TimezonePicker({
   };
 
   const toggleCountry = (countryKey: string) => {
-    setExpandedCountries(prev => {
+    setExpandedCountries((prev) => {
       const next = new Set(prev);
       if (next.has(countryKey)) {
         next.delete(countryKey);
@@ -110,8 +111,11 @@ export default function TimezonePicker({
   };
 
   const renderTimezoneOption = (timezone: string, showDetectedBadge = false) => {
-    const tz = allTimezones.find(t => t.value === timezone);
-    const displayLabel = tz?.isCapital && tz?.capitalLabel ? tz.capitalLabel : (tz?.label || timezone.split('/').pop() || timezone);
+    const tz = allTimezones.find((t) => t.value === timezone);
+    const displayLabel =
+      tz?.isCapital && tz?.capitalLabel
+        ? tz.capitalLabel
+        : tz?.label || timezone.split('/').pop() || timezone;
     const offset = getTimezoneOffset(timezone);
     const isSelected = value === timezone;
     const isCapital = tz?.isCapital;
@@ -122,15 +126,11 @@ export default function TimezonePicker({
         type="button"
         onClick={() => handleSelect(timezone)}
         className={`w-full px-3 py-2 text-left flex items-center justify-between gap-2 transition-colors ${
-          isSelected
-            ? 'bg-blue-50 text-blue-700'
-            : 'hover:bg-gray-50 text-gray-700'
+          isSelected ? 'bg-blue-50 text-blue-700' : 'hover:bg-gray-50 text-gray-700'
         }`}
       >
         <div className="flex items-center gap-2 min-w-0">
-          {showDetectedBadge && (
-            <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />
-          )}
+          {showDetectedBadge && <MapPin className="w-4 h-4 text-green-600 flex-shrink-0" />}
           <div className="min-w-0">
             <span className="truncate block text-sm">{displayLabel}</span>
           </div>
@@ -179,9 +179,7 @@ export default function TimezonePicker({
         />
       </button>
 
-      {helperText && (
-        <p className="mt-1.5 text-xs text-gray-500">{helperText}</p>
-      )}
+      {helperText && <p className="mt-1.5 text-xs text-gray-500">{helperText}</p>}
 
       {isOpen && (
         <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden">
@@ -203,14 +201,14 @@ export default function TimezonePicker({
             {filteredTimezones ? (
               filteredTimezones.length > 0 ? (
                 <div className="py-1">
-                  {filteredTimezones.slice(0, 50).map(tz =>
+                  {filteredTimezones.slice(0, 50).map((tz) => (
                     <div key={tz.value}>
                       <div className="px-3 py-1 text-xs text-gray-400">
                         {tz.continent} / {tz.country}
                       </div>
                       {renderTimezoneOption(tz.value, tz.value === detectedTimezone)}
                     </div>
-                  )}
+                  ))}
                   {filteredTimezones.length > 50 && (
                     <div className="px-3 py-2 text-center text-gray-500 text-xs">
                       Showing first 50 results. Type more to narrow down.
@@ -259,7 +257,8 @@ export default function TimezonePicker({
                           <span className="text-sm font-medium text-gray-700">{continent}</span>
                         </div>
                         <span className="text-xs text-gray-400">
-                          {countryCount} {countryCount === 1 ? 'country' : 'countries'}, {tzCount} zones
+                          {countryCount} {countryCount === 1 ? 'country' : 'countries'}, {tzCount}{' '}
+                          zones
                         </span>
                       </button>
 
@@ -294,14 +293,18 @@ export default function TimezonePicker({
                                     ) : (
                                       <ChevronRight className="w-3 h-3 text-gray-400" />
                                     )}
-                                    <span className="text-xs font-medium text-gray-600">{country}</span>
+                                    <span className="text-xs font-medium text-gray-600">
+                                      {country}
+                                    </span>
                                   </div>
-                                  <span className="text-xs text-gray-400">{timezones.length} zones</span>
+                                  <span className="text-xs text-gray-400">
+                                    {timezones.length} zones
+                                  </span>
                                 </button>
 
                                 {isCountryExpanded && (
                                   <div className="pl-4">
-                                    {timezones.map(tz => renderTimezoneOption(tz.value))}
+                                    {timezones.map((tz) => renderTimezoneOption(tz.value))}
                                   </div>
                                 )}
                               </div>

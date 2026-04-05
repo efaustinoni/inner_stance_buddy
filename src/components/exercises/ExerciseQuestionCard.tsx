@@ -20,7 +20,7 @@ export function ExerciseQuestionCard({
   onSaveAnswer,
   onDeleteQuestion,
   onStartTracking,
-  onViewProgress
+  onViewProgress,
 }: ExerciseQuestionCardProps) {
   const [answer, setAnswer] = useState(question.answer?.answer_text || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -82,9 +82,7 @@ export function ExerciseQuestionCard({
         />
 
         <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-content-muted">
-            {answer.length} characters
-          </span>
+          <span className="text-xs text-content-muted">{answer.length} characters</span>
 
           <div className="flex items-center gap-2">
             {saved && (

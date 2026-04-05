@@ -2,7 +2,19 @@
 // Last Updated: 2026-04-02 (add From Image tab)
 
 import { useState, useCallback, useRef } from 'react';
-import { X, FileText, AlertCircle, Calendar, Tag, Upload, Type, CheckCircle, Image as ImageIcon, Loader2, ScanSearch } from 'lucide-react';
+import {
+  X,
+  FileText,
+  AlertCircle,
+  Calendar,
+  Tag,
+  Upload,
+  Type,
+  CheckCircle,
+  Image as ImageIcon,
+  Loader2,
+  ScanSearch,
+} from 'lucide-react';
 import { extractQuestionsFromImage } from '../../lib/exerciseService';
 
 export interface BulkImportData {
@@ -19,7 +31,8 @@ interface BulkImportModalProps {
 
 type ImportMode = 'text' | 'csv' | 'image';
 
-const QUESTION_LABEL_PATTERN = /^(Reflectie|Actie|Vraag|Question|Action|Reflection|Oefening|Exercise)\s*\d+[a-z]?[:.]\s*/i;
+const QUESTION_LABEL_PATTERN =
+  /^(Reflectie|Actie|Vraag|Question|Action|Reflection|Oefening|Exercise)\s*\d+[a-z]?[:.]\s*/i;
 const NUMBERED_LABEL_PATTERN = /^(\d+[a-z]?)[.:]\s+(?=[A-Z])/;
 const WEEK_PATTERN = /^Week[:\s]+(\d+)/i;
 const THEME_PATTERN = /^(Theme|Thema)[:\s]+(.+)/i;
@@ -109,31 +122,39 @@ function parseCSVLine(line: string): string[] {
 
 function parseCSV(csvText: string): BulkImportData {
   let text = csvText;
-  if (text.charCodeAt(0) === 0xFEFF) {
+  if (text.charCodeAt(0) === 0xfeff) {
     text = text.slice(1);
   }
 
-  const lines = text.split(/\r?\n/).filter(line => line.trim());
+  const lines = text.split(/\r?\n/).filter((line) => line.trim());
   if (lines.length < 2) {
     return { questions: [] };
   }
 
   const rawHeaders = parseCSVLine(lines[0]);
-  const headers = rawHeaders.map(h => h.toLowerCase().trim().replace(/[^a-z0-9_]/g, ''));
+  const headers = rawHeaders.map((h) =>
+    h
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9_]/g, '')
+  );
   const dataLine = parseCSVLine(lines[1]);
 
   console.log('[CSV Parser] Headers:', headers);
   console.log('[CSV Parser] Data columns:', dataLine.length);
   dataLine.forEach((val, idx) => {
     if (headers[idx]?.includes('answer')) {
-      console.log(`[CSV Parser] ${headers[idx]}: "${val.substring(0, 100)}..." (length: ${val.length})`);
+      console.log(
+        `[CSV Parser] ${headers[idx]}: "${val.substring(0, 100)}..." (length: ${val.length})`
+      );
     }
   });
 
-  const weekIdx = headers.findIndex(h => h === 'week');
-  const themeIdx = headers.findIndex(h => h === 'theme' || h === 'thema');
+  const weekIdx = headers.findIndex((h) => h === 'week');
+  const themeIdx = headers.findIndex((h) => h === 'theme' || h === 'thema');
 
-  const weekNumber = weekIdx !== -1 && dataLine[weekIdx] ? parseInt(dataLine[weekIdx], 10) : undefined;
+  const weekNumber =
+    weekIdx !== -1 && dataLine[weekIdx] ? parseInt(dataLine[weekIdx], 10) : undefined;
   const theme = themeIdx !== -1 && dataLine[themeIdx] ? dataLine[themeIdx] : undefined;
 
   const questions: { label: string; text: string; answer?: string }[] = [];
@@ -150,12 +171,17 @@ function parseCSV(csvText: string): BulkImportData {
     const directAnswerIdx = headers.indexOf(directAnswerKey);
     let answer: string | undefined;
 
-    console.log(`[CSV Parser] Q${qNum}: Looking for ${directAnswerKey}, found at index ${directAnswerIdx}, value length: ${dataLine[directAnswerIdx]?.length || 0}`);
+    console.log(
+      `[CSV Parser] Q${qNum}: Looking for ${directAnswerKey}, found at index ${directAnswerIdx}, value length: ${dataLine[directAnswerIdx]?.length || 0}`
+    );
 
     if (directAnswerIdx !== -1 && dataLine[directAnswerIdx]) {
       const rawAnswer = dataLine[directAnswerIdx];
       console.log(`[CSV Parser] Q${qNum}: Raw answer has ${rawAnswer.split('|').length} parts`);
-      answer = rawAnswer.split('|').map(a => a.trim()).join('\n');
+      answer = rawAnswer
+        .split('|')
+        .map((a) => a.trim())
+        .join('\n');
       console.log(`[CSV Parser] Q${qNum}: Final answer length: ${answer.length}`);
     } else {
       const subAnswers: string[] = [];
@@ -177,7 +203,8 @@ function parseCSV(csvText: string): BulkImportData {
 
     const labelKey = `label_${qNum}`;
     const labelIdx = headers.indexOf(labelKey);
-    const questionLabel = (labelIdx !== -1 && dataLine[labelIdx]) ? dataLine[labelIdx] : `Vraag ${qNum}`;
+    const questionLabel =
+      labelIdx !== -1 && dataLine[labelIdx] ? dataLine[labelIdx] : `Vraag ${qNum}`;
 
     questions.push({
       label: questionLabel,
@@ -190,7 +217,11 @@ function parseCSV(csvText: string): BulkImportData {
 }
 
 /** Resize + JPEG-compress an image file, returning the base64-encoded result (no data-URL prefix). */
-async function compressAndEncodeImage(file: File, maxDim = 2048, quality = 0.85): Promise<{ base64: string; mimeType: string }> {
+async function compressAndEncodeImage(
+  file: File,
+  maxDim = 2048,
+  quality = 0.85
+): Promise<{ base64: string; mimeType: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -251,7 +282,9 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
     setParsedData(result);
 
     if (result.questions.length === 0 && text.trim()) {
-      setParseError('Could not parse any questions. Each question should start with a label like "Reflectie 1a:" or "Actie 2:"');
+      setParseError(
+        'Could not parse any questions. Each question should start with a label like "Reflectie 1a:" or "Actie 2:"'
+      );
     }
   }, []);
 
@@ -274,7 +307,9 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
       setParsedData(result);
 
       if (result.questions.length === 0) {
-        setParseError('Could not parse any questions from CSV. Ensure the file has headers like question_1, answer_1a, answer_1b, etc.');
+        setParseError(
+          'Could not parse any questions from CSV. Ensure the file has headers like question_1, answer_1a, answer_1b, etc.'
+        );
       }
     };
     reader.onerror = () => {
@@ -310,11 +345,15 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
       const result = await extractQuestionsFromImage(base64, mimeType);
 
       if (result === null) {
-        setParseError('Extraction failed — check the Supabase edge function logs for details (model may not support vision, or API key invalid).');
+        setParseError(
+          'Extraction failed — check the Supabase edge function logs for details (model may not support vision, or API key invalid).'
+        );
         return;
       }
       if (result.questions.length === 0) {
-        setParseError('The AI returned no questions. Try a different image or check that the model supports vision inputs.');
+        setParseError(
+          'The AI returned no questions. Try a different image or check that the model supports vision inputs.'
+        );
         return;
       }
 
@@ -361,9 +400,7 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
         <div className="flex items-center justify-between p-4 border-b border-navy-700">
           <div className="flex items-center gap-2">
             <FileText size={20} className="text-accent-gold" />
-            <h2 className="text-lg font-semibold text-content-inverse">
-              Bulk Import Questions
-            </h2>
+            <h2 className="text-lg font-semibold text-content-inverse">Bulk Import Questions</h2>
           </div>
           <button
             onClick={handleClose}
@@ -416,7 +453,8 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                 Upload Image
               </label>
               <p className="text-xs text-content-muted mb-3">
-                Take a photo of a printed exercise sheet. AI will extract all questions and answers automatically.
+                Take a photo of a printed exercise sheet. AI will extract all questions and answers
+                automatically.
               </p>
               <div
                 onClick={() => !isExtracting && imageInputRef.current?.click()}
@@ -437,7 +475,9 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                 {isExtracting ? (
                   <div className="flex flex-col items-center gap-2 py-2">
                     <Loader2 size={32} className="text-accent-blue animate-spin" />
-                    <p className="text-content-inverse font-medium text-sm">Extracting questions…</p>
+                    <p className="text-content-inverse font-medium text-sm">
+                      Extracting questions…
+                    </p>
                     <p className="text-xs text-content-muted">AI is reading your image</p>
                   </div>
                 ) : imagePreviewUrl ? (
@@ -447,13 +487,19 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                       alt="Preview"
                       className="max-h-36 rounded-lg object-contain mx-auto"
                     />
-                    <p className="text-content-muted text-xs mt-1">{imageFileName} — click to replace</p>
+                    <p className="text-content-muted text-xs mt-1">
+                      {imageFileName} — click to replace
+                    </p>
                   </div>
                 ) : (
                   <>
                     <ImageIcon size={32} className="mx-auto text-content-muted mb-2" />
-                    <p className="text-content-inverse font-medium">Click to upload or take a photo</p>
-                    <p className="text-xs text-content-muted mt-1">JPG, PNG, HEIC — large images are auto-compressed</p>
+                    <p className="text-content-inverse font-medium">
+                      Click to upload or take a photo
+                    </p>
+                    <p className="text-xs text-content-muted mt-1">
+                      JPG, PNG, HEIC — large images are auto-compressed
+                    </p>
                   </>
                 )}
               </div>
@@ -464,7 +510,8 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                 Upload CSV File
               </label>
               <p className="text-xs text-content-muted mb-3">
-                CSV format: week, theme, label_1, question_1, answer_1, label_2, question_2, answer_2, ... (label_N is optional; use | to separate multi-line answers)
+                CSV format: week, theme, label_1, question_1, answer_1, label_2, question_2,
+                answer_2, ... (label_N is optional; use | to separate multi-line answers)
               </p>
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -494,7 +541,8 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
                 Paste your questions below
               </label>
               <p className="text-xs text-content-muted mb-2">
-                Include "Week: 3" and "Thema: War on Weakness" at the top to create a new week automatically
+                Include "Week: 3" and "Thema: War on Weakness" at the top to create a new week
+                automatically
               </p>
               <textarea
                 value={rawText}
@@ -518,7 +566,9 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
               {parsedData.weekNumber && (
                 <div className="flex items-center gap-2 px-3 py-1.5 bg-accent-blue/10 border border-accent-blue/30 rounded-lg">
                   <Calendar size={14} className="text-accent-blue" />
-                  <span className="text-sm text-accent-blue font-medium">Week {parsedData.weekNumber}</span>
+                  <span className="text-sm text-accent-blue font-medium">
+                    Week {parsedData.weekNumber}
+                  </span>
                 </div>
               )}
               {parsedData.theme && (
@@ -537,12 +587,11 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
               </h3>
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {parsedData.questions.map((q, index) => (
-                  <div
-                    key={index}
-                    className="p-3 bg-navy-900 rounded-lg border border-navy-700"
-                  >
+                  <div key={index} className="p-3 bg-navy-900 rounded-lg border border-navy-700">
                     <div className="flex items-start gap-2">
-                      <span className="text-accent-gold font-medium text-sm shrink-0">{q.label}:</span>
+                      <span className="text-accent-gold font-medium text-sm shrink-0">
+                        {q.label}:
+                      </span>
                       <span className="text-content-inverse text-sm">{q.text}</span>
                     </div>
                     {q.answer && (
@@ -570,7 +619,11 @@ export function BulkImportModal({ isOpen, onClose, onImport }: BulkImportModalPr
             disabled={isImporting || isExtracting || parsedData.questions.length === 0}
             className="px-4 py-2 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isImporting ? 'Importing...' : isExtracting ? 'Extracting...' : `Import ${parsedData.questions.length} Questions`}
+            {isImporting
+              ? 'Importing...'
+              : isExtracting
+                ? 'Extracting...'
+                : `Import ${parsedData.questions.length} Questions`}
           </button>
         </div>
       </div>

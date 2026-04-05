@@ -65,7 +65,9 @@ export async function fetchUserQuarters(): Promise<ExerciseQuarter[]> {
 }
 
 export async function createQuarter(label: string): Promise<ExerciseQuarter | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -97,10 +99,7 @@ export async function updateQuarter(quarterId: string, label: string): Promise<b
 }
 
 export async function deleteQuarter(quarterId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('exercise_quarters')
-    .delete()
-    .eq('id', quarterId);
+  const { error } = await supabase.from('exercise_quarters').delete().eq('id', quarterId);
 
   if (error) {
     console.error('Error deleting quarter:', error);
@@ -121,7 +120,8 @@ export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
     return [];
   }
 
-  return (data || []).map((w: any) => ({
+  type WeekWithJoin = ExerciseWeek & { exercise_quarters?: { label: string } | null };
+  return (data || []).map((w: WeekWithJoin) => ({
     ...w,
     quarter_label: w.exercise_quarters?.label ?? null,
     exercise_quarters: undefined,
@@ -151,7 +151,7 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
     return { ...week, questions: [] };
   }
 
-  const questionIds = questions?.map(q => q.id) || [];
+  const questionIds = questions?.map((q) => q.id) || [];
 
   let answers: ExerciseAnswer[] = [];
   if (questionIds.length > 0) {
@@ -162,14 +162,14 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
     answers = answersData || [];
   }
 
-  const questionsWithAnswers: QuestionWithAnswer[] = (questions || []).map(q => ({
+  const questionsWithAnswers: QuestionWithAnswer[] = (questions || []).map((q) => ({
     ...q,
-    answer: answers.find(a => a.question_id === q.id)
+    answer: answers.find((a) => a.question_id === q.id),
   }));
 
   return {
     ...week,
-    questions: questionsWithAnswers
+    questions: questionsWithAnswers,
   };
 }
 
@@ -178,7 +178,9 @@ export async function createWeek(
   topic: string,
   quarterId?: string | null
 ): Promise<ExerciseWeek | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -188,7 +190,7 @@ export async function createWeek(
       week_number: weekNumber,
       title: 'Exercise',
       topic,
-      quarter_id: quarterId ?? null
+      quarter_id: quarterId ?? null,
     })
     .select()
     .single();
@@ -201,7 +203,10 @@ export async function createWeek(
   return data;
 }
 
-export async function moveWeekToQuarter(weekId: string, quarterId: string | null): Promise<boolean> {
+export async function moveWeekToQuarter(
+  weekId: string,
+  quarterId: string | null
+): Promise<boolean> {
   const { error } = await supabase
     .from('exercise_weeks')
     .update({ quarter_id: quarterId, updated_at: new Date().toISOString() })
@@ -220,7 +225,9 @@ export async function copyWeekToQuarter(
   targetQuarterId: string | null,
   includeAnswers: boolean
 ): Promise<ExerciseWeek | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data: sourceWeek } = await supabase
@@ -238,7 +245,7 @@ export async function copyWeekToQuarter(
       week_number: sourceWeek.week_number,
       title: sourceWeek.title,
       topic: sourceWeek.topic,
-      quarter_id: targetQuarterId
+      quarter_id: targetQuarterId,
     })
     .select()
     .single();
@@ -255,7 +262,7 @@ export async function copyWeekToQuarter(
     .order('sort_order', { ascending: true });
 
   if (sourceQuestions && sourceQuestions.length > 0) {
-    const newQuestions: any[] = [];
+    const newQuestions: { newId: string; oldId: string }[] = [];
     for (const q of sourceQuestions) {
       const { data: newQ, error: qError } = await supabase
         .from('exercise_questions')
@@ -263,7 +270,7 @@ export async function copyWeekToQuarter(
           week_id: newWeek.id,
           question_label: q.question_label,
           question_text: q.question_text,
-          sort_order: q.sort_order
+          sort_order: q.sort_order,
         })
         .select()
         .single();
@@ -274,7 +281,7 @@ export async function copyWeekToQuarter(
     }
 
     if (includeAnswers && newQuestions.length > 0) {
-      const oldIds = newQuestions.map(q => q.oldId);
+      const oldIds = newQuestions.map((q) => q.oldId);
       const { data: sourceAnswers } = await supabase
         .from('decrypted_exercise_answers')
         .select('*')
@@ -283,12 +290,12 @@ export async function copyWeekToQuarter(
 
       if (sourceAnswers && sourceAnswers.length > 0) {
         for (const a of sourceAnswers) {
-          const mapping = newQuestions.find(q => q.oldId === a.question_id);
+          const mapping = newQuestions.find((q) => q.oldId === a.question_id);
           if (mapping) {
             await supabase.from('exercise_answers').insert({
               question_id: mapping.newId,
               user_id: user.id,
-              answer_text: a.answer_text
+              answer_text: a.answer_text,
             });
           }
         }
@@ -317,10 +324,7 @@ export async function updateWeek(
 }
 
 export async function deleteWeek(weekId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('exercise_weeks')
-    .delete()
-    .eq('id', weekId);
+  const { error } = await supabase.from('exercise_weeks').delete().eq('id', weekId);
 
   if (error) {
     console.error('Error deleting week:', error);
@@ -342,7 +346,7 @@ export async function addQuestion(
       week_id: weekId,
       question_label: questionLabel,
       question_text: questionText,
-      sort_order: sortOrder
+      sort_order: sortOrder,
     })
     .select()
     .single();
@@ -373,10 +377,7 @@ export async function updateQuestion(
 }
 
 export async function deleteQuestion(questionId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('exercise_questions')
-    .delete()
-    .eq('id', questionId);
+  const { error } = await supabase.from('exercise_questions').delete().eq('id', questionId);
 
   if (error) {
     console.error('Error deleting question:', error);
@@ -386,11 +387,10 @@ export async function deleteQuestion(questionId: string): Promise<boolean> {
   return true;
 }
 
-export async function saveAnswer(
-  questionId: string,
-  answerText: string
-): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+export async function saveAnswer(questionId: string, answerText: string): Promise<boolean> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   const { data: existing } = await supabase
@@ -411,13 +411,11 @@ export async function saveAnswer(
       return false;
     }
   } else {
-    const { error } = await supabase
-      .from('exercise_answers')
-      .insert({
-        question_id: questionId,
-        user_id: user.id,
-        answer_text: answerText
-      });
+    const { error } = await supabase.from('exercise_answers').insert({
+      question_id: questionId,
+      user_id: user.id,
+      answer_text: answerText,
+    });
 
     if (error) {
       console.error('Error creating answer:', error);
@@ -433,14 +431,23 @@ export async function bulkImportQuestions(
   questions: { label: string; text: string; answer?: string }[],
   replaceExisting: boolean = true
 ): Promise<boolean> {
-  console.log('[BulkImport] Received questions:', JSON.stringify(questions.map(q => ({
-    label: q.label,
-    text: q.text?.substring(0, 30),
-    hasAnswer: !!q.answer,
-    answerPreview: q.answer?.substring(0, 30)
-  })), null, 2));
+  console.log(
+    '[BulkImport] Received questions:',
+    JSON.stringify(
+      questions.map((q) => ({
+        label: q.label,
+        text: q.text?.substring(0, 30),
+        hasAnswer: !!q.answer,
+        answerPreview: q.answer?.substring(0, 30),
+      })),
+      null,
+      2
+    )
+  );
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return false;
 
   if (replaceExisting) {
@@ -450,32 +457,23 @@ export async function bulkImportQuestions(
       .eq('week_id', weekId);
 
     if (existingQuestions && existingQuestions.length > 0) {
-      const questionIds = existingQuestions.map(q => q.id);
+      const questionIds = existingQuestions.map((q) => q.id);
 
-      await supabase
-        .from('exercise_answers')
-        .delete()
-        .in('question_id', questionIds);
+      await supabase.from('exercise_answers').delete().in('question_id', questionIds);
 
       await supabase
         .from('progress_check_ins')
         .delete()
-        .in('tracker_id', (
-          await supabase
-            .from('progress_trackers')
-            .select('id')
-            .in('question_id', questionIds)
-        ).data?.map(t => t.id) || []);
+        .in(
+          'tracker_id',
+          (
+            await supabase.from('progress_trackers').select('id').in('question_id', questionIds)
+          ).data?.map((t) => t.id) || []
+        );
 
-      await supabase
-        .from('progress_trackers')
-        .delete()
-        .in('question_id', questionIds);
+      await supabase.from('progress_trackers').delete().in('question_id', questionIds);
 
-      await supabase
-        .from('exercise_questions')
-        .delete()
-        .eq('week_id', weekId);
+      await supabase.from('exercise_questions').delete().eq('week_id', weekId);
 
       console.log(`[BulkImport] Deleted ${existingQuestions.length} existing questions for week`);
     }
@@ -491,7 +489,7 @@ export async function bulkImportQuestions(
         week_id: weekId,
         question_label: q.label,
         question_text: q.text,
-        sort_order: i
+        sort_order: i,
       })
       .select()
       .single();
@@ -513,15 +511,13 @@ export async function bulkImportQuestions(
       return {
         question_id: insertedQuestion.id,
         user_id: user.id,
-        answer_text: q.answer
+        answer_text: q.answer,
       };
     })
     .filter((a): a is { question_id: string; user_id: string; answer_text: string } => a !== null);
 
   if (answersToInsert.length > 0) {
-    const { error: answerError } = await supabase
-      .from('exercise_answers')
-      .insert(answersToInsert);
+    const { error: answerError } = await supabase.from('exercise_answers').insert(answersToInsert);
 
     if (answerError) {
       console.error('[BulkImport] Error inserting answers:', answerError);
@@ -553,7 +549,9 @@ export async function extractQuestionsFromImage(
   imageBase64: string,
   mimeType: string
 ): Promise<ImageExtractedData | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) {
     console.error('[extractQuestionsFromImage] No active session');
     return null;
@@ -588,13 +586,17 @@ export async function extractQuestionsFromImage(
     return null;
   }
 
-  const questions = data.questions.map((q: any) => ({
+  type RawQuestion = { label: string; text: string; answer?: string | null };
+  const questions = data.questions.map((q: RawQuestion) => ({
     label: q.label || 'Vraag',
     text: q.text || '',
     // Answers returned from the Edge Function already use | as line separator;
     // convert them to newlines so they match the app's internal format.
     answer: q.answer
-      ? String(q.answer).split('|').map((a: string) => a.trim()).join('\n')
+      ? String(q.answer)
+          .split('|')
+          .map((a: string) => a.trim())
+          .join('\n')
       : undefined,
   }));
 
@@ -638,7 +640,9 @@ export interface TrackerWithCheckIns extends ProgressTracker {
 }
 
 export async function createProgressTracker(questionId: string): Promise<ProgressTracker | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -646,7 +650,7 @@ export async function createProgressTracker(questionId: string): Promise<Progres
     .insert({
       question_id: questionId,
       user_id: user.id,
-      started_at: new Date().toISOString().split('T')[0]
+      started_at: new Date().toISOString().split('T')[0],
     })
     .select()
     .single();
@@ -660,7 +664,9 @@ export async function createProgressTracker(questionId: string): Promise<Progres
 }
 
 export async function getTrackerForQuestion(questionId: string): Promise<ProgressTracker | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -679,7 +685,9 @@ export async function getTrackerForQuestion(questionId: string): Promise<Progres
 }
 
 export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return [];
 
   const { data: trackers, error: trackersError } = await supabase
@@ -693,30 +701,31 @@ export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
     return [];
   }
 
-  const questionIds = trackers.map(t => t.question_id);
+  const questionIds = trackers.map((t) => t.question_id);
   const { data: questions } = await supabase
     .from('decrypted_exercise_questions')
     .select('*')
     .in('id', questionIds);
 
-  const weekIds = [...new Set(questions?.map(q => q.week_id) || [])];
-  const { data: weeks } = await supabase
-    .from('exercise_weeks')
-    .select('*')
-    .in('id', weekIds);
+  const weekIds = [...new Set(questions?.map((q) => q.week_id) || [])];
+  const { data: weeks } = await supabase.from('exercise_weeks').select('*').in('id', weekIds);
 
-  return trackers.map(tracker => {
-    const question = questions?.find(q => q.id === tracker.question_id);
-    const week = weeks?.find(w => w.id === question?.week_id);
-    return {
-      ...tracker,
-      question: question!,
-      week: week!
-    };
-  }).filter(t => t.question && t.week);
+  return trackers
+    .map((tracker) => {
+      const question = questions?.find((q) => q.id === tracker.question_id);
+      const week = weeks?.find((w) => w.id === question?.week_id);
+      return {
+        ...tracker,
+        question: question!,
+        week: week!,
+      };
+    })
+    .filter((t) => t.question && t.week);
 }
 
-export async function fetchTrackerWithCheckIns(trackerId: string): Promise<TrackerWithCheckIns | null> {
+export async function fetchTrackerWithCheckIns(
+  trackerId: string
+): Promise<TrackerWithCheckIns | null> {
   const { data: tracker, error: trackerError } = await supabase
     .from('progress_trackers')
     .select('*')
@@ -758,11 +767,15 @@ export async function fetchTrackerWithCheckIns(trackerId: string): Promise<Track
     question: question!,
     week: week!,
     check_ins: checkIns || [],
-    answer: answer || undefined
+    answer: answer || undefined,
   };
 }
 
-export async function toggleCheckIn(trackerId: string, date: string, isDone: boolean): Promise<boolean> {
+export async function toggleCheckIn(
+  trackerId: string,
+  date: string,
+  isDone: boolean
+): Promise<boolean> {
   const { data: existing } = await supabase
     .from('progress_check_ins')
     .select('id')
@@ -781,13 +794,11 @@ export async function toggleCheckIn(trackerId: string, date: string, isDone: boo
       return false;
     }
   } else {
-    const { error } = await supabase
-      .from('progress_check_ins')
-      .insert({
-        tracker_id: trackerId,
-        check_in_date: date,
-        is_done: isDone
-      });
+    const { error } = await supabase.from('progress_check_ins').insert({
+      tracker_id: trackerId,
+      check_in_date: date,
+      is_done: isDone,
+    });
 
     if (error) {
       console.error('Error creating check-in:', error);
@@ -799,10 +810,7 @@ export async function toggleCheckIn(trackerId: string, date: string, isDone: boo
 }
 
 export async function deleteProgressTracker(trackerId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('progress_trackers')
-    .delete()
-    .eq('id', trackerId);
+  const { error } = await supabase.from('progress_trackers').delete().eq('id', trackerId);
 
   if (error) {
     console.error('Error deleting tracker:', error);
@@ -835,14 +843,12 @@ export async function updateCheckInNotes(
       return false;
     }
   } else {
-    const { error } = await supabase
-      .from('progress_check_ins')
-      .insert({
-        tracker_id: trackerId,
-        check_in_date: date,
-        is_done: false,
-        notes
-      });
+    const { error } = await supabase.from('progress_check_ins').insert({
+      tracker_id: trackerId,
+      check_in_date: date,
+      is_done: false,
+      notes,
+    });
 
     if (error) {
       console.error('Error creating check-in with notes:', error);
@@ -871,7 +877,9 @@ export async function fetchDashboardData(): Promise<{
   weeks: ExerciseWeek[];
   questions: DashboardQuestion[];
 }> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return { weeks: [], questions: [] };
 
   const { data: weeksRaw } = await supabase
@@ -881,7 +889,8 @@ export async function fetchDashboardData(): Promise<{
 
   if (!weeksRaw?.length) return { weeks: [], questions: [] };
 
-  const weeks: ExerciseWeek[] = weeksRaw.map((w: any) => ({
+  type WeekRowWithJoin = ExerciseWeek & { exercise_quarters?: { label: string } | null };
+  const weeks: ExerciseWeek[] = weeksRaw.map((w: WeekRowWithJoin) => ({
     ...w,
     quarter_label: w.exercise_quarters?.label ?? null,
     exercise_quarters: undefined,
@@ -889,7 +898,7 @@ export async function fetchDashboardData(): Promise<{
 
   if (!weeks?.length) return { weeks: [], questions: [] };
 
-  const weekIds = weeks.map(w => w.id);
+  const weekIds = weeks.map((w) => w.id);
   const { data: questions } = await supabase
     .from('decrypted_exercise_questions')
     .select('*')
@@ -898,7 +907,7 @@ export async function fetchDashboardData(): Promise<{
 
   if (!questions?.length) return { weeks, questions: [] };
 
-  const questionIds = questions.map(q => q.id);
+  const questionIds = questions.map((q) => q.id);
 
   const { data: answers } = await supabase
     .from('decrypted_exercise_answers')
@@ -913,11 +922,11 @@ export async function fetchDashboardData(): Promise<{
     .eq('is_active', true)
     .in('question_id', questionIds);
 
-  const weekMap = new Map(weeks.map(w => [w.id, w]));
-  const answerMap = new Map(answers?.map(a => [a.question_id, a]) || []);
-  const trackerMap = new Map(trackers?.map(t => [t.question_id, t]) || []);
+  const weekMap = new Map(weeks.map((w) => [w.id, w]));
+  const answerMap = new Map(answers?.map((a) => [a.question_id, a]) || []);
+  const trackerMap = new Map(trackers?.map((t) => [t.question_id, t]) || []);
 
-  const dashboardQuestions: DashboardQuestion[] = questions.map(q => {
+  const dashboardQuestions: DashboardQuestion[] = questions.map((q) => {
     const week = weekMap.get(q.week_id);
     const answer = answerMap.get(q.id);
     const tracker = trackerMap.get(q.id);
@@ -933,7 +942,7 @@ export async function fetchDashboardData(): Promise<{
       quarter_label: week?.quarter_label ?? null,
       answer_text: answer?.answer_text,
       tracker_id: tracker?.id,
-      tracker_started_at: tracker?.started_at
+      tracker_started_at: tracker?.started_at,
     };
   });
 

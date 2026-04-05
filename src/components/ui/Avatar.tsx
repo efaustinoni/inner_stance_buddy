@@ -126,12 +126,7 @@ interface AvatarGroupProps {
   className?: string;
 }
 
-export function AvatarGroup({
-  avatars,
-  max = 4,
-  size = 'sm',
-  className = '',
-}: AvatarGroupProps) {
+export function AvatarGroup({ avatars, max = 4, size = 'sm', className = '' }: AvatarGroupProps) {
   const visibleAvatars = avatars.slice(0, max);
   const remainingCount = avatars.length - max;
 

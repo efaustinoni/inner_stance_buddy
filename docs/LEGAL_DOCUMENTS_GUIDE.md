@@ -16,15 +16,15 @@ Legal documents are managed through two components:
 
 The `legal_documents` table contains:
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `id` | uuid | Primary key |
-| `document_type` | text | Either `'terms'` or `'privacy'` |
-| `version` | text | Semantic version (e.g., `'1.0'`, `'1.1'`, `'2.0'`) |
-| `last_updated` | date | Date the document was last updated |
-| `file_path` | text | Path relative to `public/` folder |
-| `is_active` | boolean | Only active documents are shown to users |
-| `requires_acceptance` | boolean | If true, users must accept before using the app |
+| Column                | Type    | Description                                        |
+| --------------------- | ------- | -------------------------------------------------- |
+| `id`                  | uuid    | Primary key                                        |
+| `document_type`       | text    | Either `'terms'` or `'privacy'`                    |
+| `version`             | text    | Semantic version (e.g., `'1.0'`, `'1.1'`, `'2.0'`) |
+| `last_updated`        | date    | Date the document was last updated                 |
+| `file_path`           | text    | Path relative to `public/` folder                  |
+| `is_active`           | boolean | Only active documents are shown to users           |
+| `requires_acceptance` | boolean | If true, users must accept before using the app    |
 
 ## File Naming Convention
 
@@ -35,6 +35,7 @@ ai_global_experts_{document_type}_v{version}_{date}.pdf
 ```
 
 Examples:
+
 - `ai_global_experts_terms_of_service_v1.0_2025-12-22.pdf`
 - `ai_global_experts_privacy_policy_v1.1_2026-01-15.pdf`
 

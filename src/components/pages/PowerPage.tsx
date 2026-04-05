@@ -2,7 +2,17 @@
 // Last Updated: 2026-04-03 07:43 UTC (collapsible week list with quarter filter)
 
 import { useState, useEffect, useMemo } from 'react';
-import { Plus, FileText, Loader2, ArrowLeft, Home, ChevronRight, Layers, ChevronDown, Settings } from 'lucide-react';
+import {
+  Plus,
+  FileText,
+  Loader2,
+  ArrowLeft,
+  Home,
+  ChevronRight,
+  Layers,
+  ChevronDown,
+  Settings,
+} from 'lucide-react';
 import {
   WeekSelector,
   ExerciseQuestionCard,
@@ -10,7 +20,7 @@ import {
   QuestionModal,
   BulkImportModal,
   QuarterModal,
-  type BulkImportData
+  type BulkImportData,
 } from '../exercises';
 import {
   fetchUserWeeks,
@@ -32,7 +42,7 @@ import {
   type ExerciseWeek,
   type ExerciseQuarter,
   type WeekWithQuestions,
-  type ProgressTracker
+  type ProgressTracker,
 } from '../../lib/exerciseService';
 
 interface PowerPageProps {
@@ -63,14 +73,18 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkImportTargetWeekId, setBulkImportTargetWeekId] = useState<string | null>(null);
 
-  useEffect(() => { loadWeeks(); }, []);
+  useEffect(() => {
+    loadWeeks();
+  }, []);
 
   // Reset expanded weeks when quarter filter changes
-  useEffect(() => { setExpandedWeekIds(new Set()); }, [activeQuarterId]);
+  useEffect(() => {
+    setExpandedWeekIds(new Set());
+  }, [activeQuarterId]);
 
   const filteredWeeks = useMemo(() => {
-    if (activeQuarterId === 'unassigned') return weeks.filter(w => !w.quarter_id);
-    if (activeQuarterId) return weeks.filter(w => w.quarter_id === activeQuarterId);
+    if (activeQuarterId === 'unassigned') return weeks.filter((w) => !w.quarter_id);
+    if (activeQuarterId) return weeks.filter((w) => w.quarter_id === activeQuarterId);
     return weeks;
   }, [weeks, activeQuarterId]);
 
@@ -83,33 +97,41 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
   }
 
   async function loadWeekData(wId: string) {
-    setLoadingWeekIds(prev => new Set([...prev, wId]));
+    setLoadingWeekIds((prev) => new Set([...prev, wId]));
     const data = await fetchWeekWithQuestions(wId);
     if (data?.questions) {
       const trackers: Record<string, ProgressTracker | null> = {};
-      await Promise.all(data.questions.map(async q => {
-        trackers[q.id] = await getTrackerForQuestion(q.id);
-      }));
-      setTrackersMap(prev => ({ ...prev, ...trackers }));
+      await Promise.all(
+        data.questions.map(async (q) => {
+          trackers[q.id] = await getTrackerForQuestion(q.id);
+        })
+      );
+      setTrackersMap((prev) => ({ ...prev, ...trackers }));
     }
-    if (data) setWeekDataMap(prev => new Map([...prev, [wId, data]]));
-    setLoadingWeekIds(prev => { const s = new Set(prev); s.delete(wId); return s; });
+    if (data) setWeekDataMap((prev) => new Map([...prev, [wId, data]]));
+    setLoadingWeekIds((prev) => {
+      const s = new Set(prev);
+      s.delete(wId);
+      return s;
+    });
   }
 
   async function refreshWeekData(wId: string) {
     const data = await fetchWeekWithQuestions(wId);
     if (data?.questions) {
       const trackers: Record<string, ProgressTracker | null> = {};
-      await Promise.all(data.questions.map(async q => {
-        trackers[q.id] = await getTrackerForQuestion(q.id);
-      }));
-      setTrackersMap(prev => ({ ...prev, ...trackers }));
+      await Promise.all(
+        data.questions.map(async (q) => {
+          trackers[q.id] = await getTrackerForQuestion(q.id);
+        })
+      );
+      setTrackersMap((prev) => ({ ...prev, ...trackers }));
     }
-    if (data) setWeekDataMap(prev => new Map([...prev, [wId, data]]));
+    if (data) setWeekDataMap((prev) => new Map([...prev, [wId, data]]));
   }
 
   const toggleWeek = (wId: string) => {
-    setExpandedWeekIds(prev => {
+    setExpandedWeekIds((prev) => {
       const next = new Set(prev);
       if (next.has(wId)) {
         next.delete(wId);
@@ -125,11 +147,17 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
 
   const collapseAll = () => setExpandedWeekIds(new Set());
 
-  const handleAddWeek = () => { setEditingWeek(null); setWeekModalOpen(true); };
+  const handleAddWeek = () => {
+    setEditingWeek(null);
+    setWeekModalOpen(true);
+  };
 
   const handleEditWeek = (wId: string) => {
-    const week = weeks.find(w => w.id === wId);
-    if (week) { setEditingWeek(week); setWeekModalOpen(true); }
+    const week = weeks.find((w) => w.id === wId);
+    if (week) {
+      setEditingWeek(week);
+      setWeekModalOpen(true);
+    }
   };
 
   const handleSaveWeek = async (
@@ -140,28 +168,39 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
   ) => {
     if (editingWeek) {
       await updateWeek(editingWeek.id, { week_number: weekNumber, topic, quarter_id: quarterId });
-      setWeekDataMap(prev => { const m = new Map(prev); m.delete(editingWeek.id); return m; });
+      setWeekDataMap((prev) => {
+        const m = new Map(prev);
+        m.delete(editingWeek.id);
+        return m;
+      });
     } else {
       const newWeek = await createWeek(weekNumber, topic, quarterId);
       if (newWeek) {
         if (questions && questions.length > 0) {
           await bulkImportQuestions(newWeek.id, questions);
         }
-        setExpandedWeekIds(prev => new Set([...prev, newWeek.id]));
+        setExpandedWeekIds((prev) => new Set([...prev, newWeek.id]));
         await loadWeekData(newWeek.id);
       }
     }
     await loadWeeks();
   };
 
-  const handleCopyWeekToQuarter = async (targetQuarterId: string | null, includeAnswers: boolean) => {
+  const handleCopyWeekToQuarter = async (
+    targetQuarterId: string | null,
+    includeAnswers: boolean
+  ) => {
     if (!editingWeek) return;
     await copyWeekToQuarter(editingWeek.id, targetQuarterId, includeAnswers);
     await loadWeeks();
   };
 
   const handleSaveQuarter = async (label: string, quarterId?: string) => {
-    if (quarterId) { await updateQuarter(quarterId, label); } else { await createQuarter(label); }
+    if (quarterId) {
+      await updateQuarter(quarterId, label);
+    } else {
+      await createQuarter(label);
+    }
     await loadWeeks();
   };
 
@@ -174,8 +213,16 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     if (!editingWeek) return;
     await deleteWeek(editingWeek.id);
     setEditingWeek(null);
-    setExpandedWeekIds(prev => { const s = new Set(prev); s.delete(editingWeek.id); return s; });
-    setWeekDataMap(prev => { const m = new Map(prev); m.delete(editingWeek.id); return m; });
+    setExpandedWeekIds((prev) => {
+      const s = new Set(prev);
+      s.delete(editingWeek.id);
+      return s;
+    });
+    setWeekDataMap((prev) => {
+      const m = new Map(prev);
+      m.delete(editingWeek.id);
+      return m;
+    });
     await loadWeeks();
   };
 
@@ -196,18 +243,21 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     let targetWeekId = bulkImportTargetWeekId;
 
     if (data.weekNumber) {
-      const existingWeek = weeks.find(w => w.week_number === data.weekNumber);
+      const existingWeek = weeks.find((w) => w.week_number === data.weekNumber);
       if (existingWeek) {
         targetWeekId = existingWeek.id;
       } else {
         const newWeek = await createWeek(data.weekNumber, data.theme || '');
-        if (newWeek) { targetWeekId = newWeek.id; await loadWeeks(); }
+        if (newWeek) {
+          targetWeekId = newWeek.id;
+          await loadWeeks();
+        }
       }
     }
 
     if (!targetWeekId) return;
     await bulkImportQuestions(targetWeekId, data.questions);
-    setExpandedWeekIds(prev => new Set([...prev, targetWeekId!]));
+    setExpandedWeekIds((prev) => new Set([...prev, targetWeekId!]));
     await refreshWeekData(targetWeekId);
   };
 
@@ -217,7 +267,7 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
   const handleStartTracking = async (questionId: string) => {
     const tracker = await createProgressTracker(questionId);
     if (tracker) {
-      setTrackersMap(prev => ({ ...prev, [questionId]: tracker }));
+      setTrackersMap((prev) => ({ ...prev, [questionId]: tracker }));
       onNavigate(`/progress/${tracker.id}`);
     }
   };
@@ -230,14 +280,18 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     );
   }
 
-  const hasUnassigned = weeks.some(w => !w.quarter_id);
+  const hasUnassigned = weeks.some((w) => !w.quarter_id);
 
   return (
     <div className="animate-fade-in space-y-6">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-sm">
-        <button onClick={() => onNavigate('/')} className="flex items-center gap-1 text-content-muted hover:text-accent-blue transition-colors">
-          <Home size={14} /><span>Dashboard</span>
+        <button
+          onClick={() => onNavigate('/')}
+          className="flex items-center gap-1 text-content-muted hover:text-accent-blue transition-colors"
+        >
+          <Home size={14} />
+          <span>Dashboard</span>
         </button>
         <ChevronRight size={14} className="text-content-muted/50" />
         <span className="text-accent-blue">Manage Weeks</span>
@@ -246,7 +300,7 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
       {/* Header */}
       <div className="flex items-center gap-3 flex-wrap">
         <button
-          onClick={() => window.history.length > 1 ? window.history.back() : onNavigate('/')}
+          onClick={() => (window.history.length > 1 ? window.history.back() : onNavigate('/'))}
           className="p-2 text-content-muted hover:text-content-inverse hover:bg-navy-800 rounded-lg transition-colors"
         >
           <ArrowLeft size={20} />
@@ -257,7 +311,10 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           {expandedWeekIds.size > 0 && (
-            <button onClick={collapseAll} className="px-3 py-2 text-xs text-content-muted hover:text-content-inverse bg-navy-800 hover:bg-navy-700 rounded-lg transition-colors">
+            <button
+              onClick={collapseAll}
+              className="px-3 py-2 text-xs text-content-muted hover:text-content-inverse bg-navy-800 hover:bg-navy-700 rounded-lg transition-colors"
+            >
               Collapse All
             </button>
           )}
@@ -265,13 +322,15 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
             onClick={() => setQuarterModalOpen(true)}
             className="flex items-center gap-2 px-4 py-2.5 bg-navy-700 text-content-inverse rounded-lg font-medium hover:bg-navy-600 transition-colors"
           >
-            <Layers size={18} />Manage Quarters
+            <Layers size={18} />
+            Manage Quarters
           </button>
           <button
             onClick={handleAddWeek}
             className="flex items-center gap-2 px-4 py-2.5 bg-accent-gold text-navy-900 rounded-lg font-medium hover:bg-accent-gold/90 transition-colors"
           >
-            <Plus size={18} />Add New Week
+            <Plus size={18} />
+            Add New Week
           </button>
         </div>
       </div>
@@ -287,22 +346,32 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
       {/* Week list */}
       {weeks.length === 0 ? (
         <div className="bg-navy-800 rounded-xl p-8 text-center">
-          <h2 className="text-xl font-semibold text-content-inverse mb-2">Welcome to Your Exercise Journal</h2>
+          <h2 className="text-xl font-semibold text-content-inverse mb-2">
+            Welcome to Your Exercise Journal
+          </h2>
           <p className="text-content-muted mb-6">Start by adding your first week of exercises.</p>
-          <button onClick={handleAddWeek} className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors">
-            <Plus size={18} />Add Your First Week
+          <button
+            onClick={handleAddWeek}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-accent-blue text-white rounded-lg font-medium hover:bg-accent-blue/90 transition-colors"
+          >
+            <Plus size={18} />
+            Add Your First Week
           </button>
         </div>
       ) : filteredWeeks.length === 0 ? (
         <div className="bg-navy-800 rounded-xl p-8 text-center">
           <p className="text-content-muted mb-4">No weeks in this quarter yet.</p>
-          <button onClick={handleAddWeek} className="inline-flex items-center gap-2 px-4 py-2 bg-accent-gold text-navy-900 rounded-lg font-medium hover:bg-accent-gold/90 transition-colors text-sm">
-            <Plus size={16} />Add Week
+          <button
+            onClick={handleAddWeek}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-accent-gold text-navy-900 rounded-lg font-medium hover:bg-accent-gold/90 transition-colors text-sm"
+          >
+            <Plus size={16} />
+            Add Week
           </button>
         </div>
       ) : (
         <div className="space-y-2">
-          {filteredWeeks.map(week => {
+          {filteredWeeks.map((week) => {
             const isExpanded = expandedWeekIds.has(week.id);
             const weekData = weekDataMap.get(week.id);
             const isLoadingWeek = loadingWeekIds.has(week.id);
@@ -311,14 +380,24 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
               <div key={week.id} className="bg-navy-800 rounded-xl overflow-hidden">
                 {/* Week header */}
                 <div className="flex items-center gap-2 px-4 py-3">
-                  <button onClick={() => toggleWeek(week.id)} className="flex items-center gap-3 flex-1 text-left min-w-0 group">
-                    <ChevronDown size={16} className={`shrink-0 text-content-muted transition-transform group-hover:text-content-inverse ${isExpanded ? '' : '-rotate-90'}`} />
+                  <button
+                    onClick={() => toggleWeek(week.id)}
+                    className="flex items-center gap-3 flex-1 text-left min-w-0 group"
+                  >
+                    <ChevronDown
+                      size={16}
+                      className={`shrink-0 text-content-muted transition-transform group-hover:text-content-inverse ${isExpanded ? '' : '-rotate-90'}`}
+                    />
                     <span className="px-2 py-0.5 text-xs font-medium bg-navy-700 text-content-inverse rounded shrink-0">
                       Week {week.week_number}
                     </span>
-                    <span className="text-sm font-medium text-content-inverse truncate">{week.topic}</span>
+                    <span className="text-sm font-medium text-content-inverse truncate">
+                      {week.topic}
+                    </span>
                     {week.quarter_label && (
-                      <span className="text-xs text-accent-gold/70 shrink-0 hidden sm:inline">{week.quarter_label}</span>
+                      <span className="text-xs text-accent-gold/70 shrink-0 hidden sm:inline">
+                        {week.quarter_label}
+                      </span>
                     )}
                   </button>
                   <button
@@ -342,22 +421,30 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
                         <p className="text-content-muted text-sm mb-4">No questions yet.</p>
                         <div className="flex items-center justify-center gap-3">
                           <button
-                            onClick={() => { setQuestionTargetWeekId(week.id); setQuestionModalOpen(true); }}
+                            onClick={() => {
+                              setQuestionTargetWeekId(week.id);
+                              setQuestionModalOpen(true);
+                            }}
                             className="flex items-center gap-2 px-3 py-2 bg-navy-700 text-content-inverse rounded-lg text-sm font-medium hover:bg-navy-600 transition-colors"
                           >
-                            <Plus size={16} />Add Question
+                            <Plus size={16} />
+                            Add Question
                           </button>
                           <button
-                            onClick={() => { setBulkImportTargetWeekId(week.id); setBulkImportOpen(true); }}
+                            onClick={() => {
+                              setBulkImportTargetWeekId(week.id);
+                              setBulkImportOpen(true);
+                            }}
                             className="flex items-center gap-2 px-3 py-2 bg-accent-gold text-navy-900 rounded-lg text-sm font-medium hover:bg-accent-gold/90 transition-colors"
                           >
-                            <FileText size={16} />Bulk Import
+                            <FileText size={16} />
+                            Bulk Import
                           </button>
                         </div>
                       </div>
                     ) : (
                       <div className="p-4 space-y-3">
-                        {weekData.questions.map(question => (
+                        {weekData.questions.map((question) => (
                           <div key={question.id} className="bg-navy-900 rounded-lg p-4">
                             <ExerciseQuestionCard
                               question={question}
@@ -371,16 +458,24 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
                         ))}
                         <div className="flex items-center gap-3 pt-1">
                           <button
-                            onClick={() => { setQuestionTargetWeekId(week.id); setQuestionModalOpen(true); }}
+                            onClick={() => {
+                              setQuestionTargetWeekId(week.id);
+                              setQuestionModalOpen(true);
+                            }}
                             className="flex items-center gap-2 px-3 py-2 bg-navy-700 text-content-inverse rounded-lg text-sm font-medium hover:bg-navy-600 transition-colors border border-dashed border-navy-600 hover:border-accent-blue"
                           >
-                            <Plus size={15} />Add Question
+                            <Plus size={15} />
+                            Add Question
                           </button>
                           <button
-                            onClick={() => { setBulkImportTargetWeekId(week.id); setBulkImportOpen(true); }}
+                            onClick={() => {
+                              setBulkImportTargetWeekId(week.id);
+                              setBulkImportOpen(true);
+                            }}
                             className="flex items-center gap-2 px-3 py-2 text-content-muted hover:text-accent-gold rounded-lg text-sm font-medium transition-colors"
                           >
-                            <FileText size={15} />Bulk Import
+                            <FileText size={15} />
+                            Bulk Import
                           </button>
                         </div>
                       </div>
@@ -396,16 +491,27 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
       {/* Modals */}
       <WeekModal
         isOpen={weekModalOpen}
-        onClose={() => { setWeekModalOpen(false); setEditingWeek(null); }}
+        onClose={() => {
+          setWeekModalOpen(false);
+          setEditingWeek(null);
+        }}
         onSave={handleSaveWeek}
         onDelete={editingWeek ? handleDeleteWeek : undefined}
         onCopyToQuarter={editingWeek ? handleCopyWeekToQuarter : undefined}
-        initialData={editingWeek ? { week_number: editingWeek.week_number, topic: editingWeek.topic, quarter_id: editingWeek.quarter_id } : undefined}
-        existingWeekNumbers={weeks.map(w => w.week_number)}
+        initialData={
+          editingWeek
+            ? {
+                week_number: editingWeek.week_number,
+                topic: editingWeek.topic,
+                quarter_id: editingWeek.quarter_id,
+              }
+            : undefined
+        }
+        existingWeekNumbers={weeks.map((w) => w.week_number)}
         weekNumbersInQuarter={weeks
-          .filter(w => w.quarter_id === (editingWeek?.quarter_id ?? null))
-          .map(w => w.week_number)
-          .filter(n => !editingWeek || n !== editingWeek.week_number)}
+          .filter((w) => w.quarter_id === (editingWeek?.quarter_id ?? null))
+          .map((w) => w.week_number)
+          .filter((n) => !editingWeek || n !== editingWeek.week_number)}
         quarters={quarters}
       />
 
@@ -419,13 +525,19 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
 
       <QuestionModal
         isOpen={questionModalOpen}
-        onClose={() => { setQuestionModalOpen(false); setQuestionTargetWeekId(null); }}
+        onClose={() => {
+          setQuestionModalOpen(false);
+          setQuestionTargetWeekId(null);
+        }}
         onSave={handleSaveQuestion}
       />
 
       <BulkImportModal
         isOpen={bulkImportOpen}
-        onClose={() => { setBulkImportOpen(false); setBulkImportTargetWeekId(null); }}
+        onClose={() => {
+          setBulkImportOpen(false);
+          setBulkImportTargetWeekId(null);
+        }}
         onImport={handleBulkImport}
       />
     </div>

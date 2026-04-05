@@ -18,17 +18,13 @@ export default function DeletionScheduledView({
         <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <AlertTriangle className="w-8 h-8 text-orange-600" />
         </div>
-        <h2 className="text-2xl font-bold text-gray-900 mb-3">
-          Account Deletion Scheduled
-        </h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Account Deletion Scheduled</h2>
         <p className="text-gray-600 mb-4">
           Your account has been deactivated and is scheduled for permanent deletion.
         </p>
         <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
           <p className="text-sm font-medium text-orange-900 mb-1">Hard Delete Date:</p>
-          <p className="text-lg font-semibold text-orange-700">
-            {scheduledDate}
-          </p>
+          <p className="text-lg font-semibold text-orange-700">{scheduledDate}</p>
         </div>
         <div className="text-sm text-gray-600 space-y-2 text-left mb-6">
           <p className="flex items-start gap-2">

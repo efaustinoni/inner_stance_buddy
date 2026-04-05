@@ -171,6 +171,7 @@ The application automatically monitors and optimizes database indexes:
 - Indexes are re-added when tables grow and query patterns justify them
 
 Recent optimization (2026-02-13):
+
 - Removed unused index `idx_user_terms_agreements_user_id`
 - Will monitor and re-evaluate as table grows beyond 1000 rows
 
@@ -202,6 +203,7 @@ If a security incident occurs:
 ## Changelog
 
 ### 2026-02-13
+
 - Initial security configuration guide created
 - Documented leaked password protection setup
 - Added database optimization notes

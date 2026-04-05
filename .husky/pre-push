@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+
+echo ""
+echo "▶️  Running pre-push checks..."
+echo ""
+
+# ── Sequential phase 1: Documentation audit ──────────────────────────────────
+echo "── Phase 1/2 (sequential): Documentation audit ──"
+bash "$REPO_ROOT/scripts/docs-audit.sh"
+
+# ── Sequential phase 2: Test coverage audit ──────────────────────────────────
+echo ""
+echo "── Phase 2/2 (sequential): Test coverage audit ──"
+bash "$REPO_ROOT/scripts/test-audit.sh"
+
+# ── Parallel phase ────────────────────────────────────────────────────────────
+echo ""
+echo "── Parallel phase (TypeScript · ESLint · Vitest · Prettier) ──"
+echo ""
+
+TSC_LOG=$(mktemp)
+ESL_LOG=$(mktemp)
+TEST_LOG=$(mktemp)
+PRT_LOG=$(mktemp)
+
+trap 'rm -f "$TSC_LOG" "$ESL_LOG" "$TEST_LOG" "$PRT_LOG"' EXIT
+
+(cd "$REPO_ROOT" && npx tsc -p tsconfig.app.json --noEmit) > "$TSC_LOG" 2>&1 & TSC_PID=$!
+(cd "$REPO_ROOT" && npx eslint .) > "$ESL_LOG" 2>&1 & ESL_PID=$!
+(cd "$REPO_ROOT" && npm test) > "$TEST_LOG" 2>&1 & TEST_PID=$!
+(cd "$REPO_ROOT" && npx prettier --check .) > "$PRT_LOG" 2>&1 & PRT_PID=$!
+
+FAIL=0
+wait $TSC_PID || { echo "❌ TypeScript errors:"; cat "$TSC_LOG"; FAIL=1; }
+wait $ESL_PID || { echo ""; echo "❌ ESLint errors:"; cat "$ESL_LOG"; FAIL=1; }
+wait $TEST_PID || { echo ""; echo "❌ Test failures:"; cat "$TEST_LOG"; FAIL=1; }
+wait $PRT_PID || { echo ""; echo "❌ Prettier issues:"; cat "$PRT_LOG"; FAIL=1; }
+
+[ $FAIL -eq 1 ] && exit 1
+
+echo ""
+echo "✅ All parallel checks passed."
+
+# ── Security audit ────────────────────────────────────────────────────────────
+echo ""
+echo "── Security audit ──"
+
+cd "$REPO_ROOT"
+
+echo "Checking production dependencies for high/critical vulnerabilities..."
+if ! npm audit --omit=dev --audit-level=high 2>&1; then
+  echo ""
+  echo "❌ High or critical vulnerabilities found in production dependencies. Push blocked."
+  exit 1
+fi
+echo "✅ No high/critical vulnerabilities in production dependencies."
+
+echo ""
+echo "Checking all dependencies (dev advisory — never blocks)..."
+npm audit --audit-level=critical 2>&1 || true
+echo "⚠️  Dev dependency audit above is advisory only — push not blocked."
+
+# ── File size audit ───────────────────────────────────────────────────────────
+echo ""
+echo "── File size audit (advisory) ──"
+bash "$REPO_ROOT/scripts/file-size-audit.sh"
+
+echo ""
+echo "✅ Pre-push checks complete. Push allowed."

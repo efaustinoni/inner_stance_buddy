@@ -3,7 +3,7 @@
 
 import { type ReactNode } from 'react';
 
-type CardVariant = 'light' | 'dark' | 'glass';
+type CardVariant = 'light' | 'dark' | 'glass' | 'elevated';
 
 interface CardProps {
   variant?: CardVariant;
@@ -17,6 +17,7 @@ const variantStyles: Record<CardVariant, string> = {
   light: 'bg-surface-light text-content-primary',
   dark: 'bg-navy-800 text-content-inverse',
   glass: 'bg-navy-800/50 backdrop-blur-sm text-content-inverse border border-navy-700',
+  elevated: 'bg-navy-700 text-content-inverse shadow-lg',
 };
 
 const paddingStyles: Record<'none' | 'sm' | 'md' | 'lg', string> = {
@@ -54,11 +55,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ className = '', children }: CardHeaderProps) {
-  return (
-    <div className={`mb-4 ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`mb-4 ${className}`}>{children}</div>;
 }
 
 interface CardTitleProps {
@@ -68,11 +65,7 @@ interface CardTitleProps {
 }
 
 export function CardTitle({ as: Component = 'h3', className = '', children }: CardTitleProps) {
-  return (
-    <Component className={`text-heading-3 font-semibold ${className}`}>
-      {children}
-    </Component>
-  );
+  return <Component className={`text-heading-3 font-semibold ${className}`}>{children}</Component>;
 }
 
 interface CardContentProps {
@@ -81,11 +74,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ className = '', children }: CardContentProps) {
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }
 
 interface CardFooterProps {
@@ -94,9 +83,5 @@ interface CardFooterProps {
 }
 
 export function CardFooter({ className = '', children }: CardFooterProps) {
-  return (
-    <div className={`mt-4 pt-4 border-t border-gray-200 ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`mt-4 pt-4 border-t border-gray-200 ${className}`}>{children}</div>;
 }

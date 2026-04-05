@@ -2,7 +2,22 @@
 // Last updated: 2026-02-13
 
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { Mail, Lock, User, ArrowRight, Loader2, ShieldQuestion, KeyRound, ChevronDown, Eye, EyeOff, RefreshCw, CheckCircle, AlertCircle, Clock } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  User,
+  ArrowRight,
+  Loader2,
+  ShieldQuestion,
+  KeyRound,
+  ChevronDown,
+  Eye,
+  EyeOff,
+  RefreshCw,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+} from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { appConfig } from '../lib/appConfig';
 import { hashSecurityAnswer } from '../lib/crypto';
@@ -19,7 +34,7 @@ const SECURITY_QUESTIONS = [
   'What was your childhood nickname?',
   'What is the name of your favorite childhood friend?',
   'What was the make of your first car?',
-  'What is your mother\'s maiden name?',
+  "What is your mother's maiden name?",
   'What was the name of your elementary school?',
   'What is the middle name of your oldest sibling?',
   'In what city did your parents meet?',
@@ -143,7 +158,9 @@ export default function AuthPage() {
     try {
       if (mode === 'signup') {
         if (!agreedToTerms) {
-          setError('You must agree to the Terms of Service and Privacy Policy to create an account.');
+          setError(
+            'You must agree to the Terms of Service and Privacy Policy to create an account.'
+          );
           setIsLoading(false);
           return;
         }
@@ -221,12 +238,17 @@ export default function AuthPage() {
       if (errorMessage.toLowerCase().includes('rate limit')) {
         setError(
           'Too many signup attempts. Please wait a few minutes before trying again. ' +
-          'This is a security measure to prevent spam.'
+            'This is a security measure to prevent spam.'
         );
-      } else if (errorMessage.toLowerCase().includes('email') && errorMessage.toLowerCase().includes('already')) {
+      } else if (
+        errorMessage.toLowerCase().includes('email') &&
+        errorMessage.toLowerCase().includes('already')
+      ) {
         setError('An account with this email already exists. Please sign in instead.');
       } else if (errorMessage.toLowerCase().includes('password')) {
-        setError('Password is too weak. Please use at least 6 characters with a mix of letters and numbers.');
+        setError(
+          'Password is too weak. Please use at least 6 characters with a mix of letters and numbers.'
+        );
       } else if (errorMessage.toLowerCase().includes('invalid')) {
         setError('Invalid email or password. Please check your credentials and try again.');
       } else {
@@ -236,7 +258,6 @@ export default function AuthPage() {
       setIsLoading(false);
     }
   };
-
 
   const handleResendVerification = async () => {
     setIsResending(true);
@@ -257,12 +278,13 @@ export default function AuthPage() {
       setResendSuccess(true);
       setTimeout(() => setResendSuccess(false), 5000);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to resend verification email';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to resend verification email';
 
       if (errorMessage.toLowerCase().includes('rate limit')) {
         setError(
           'Too many resend attempts. Please wait a few minutes before trying again. ' +
-          'Check your spam folder - the email may have already been delivered.'
+            'Check your spam folder - the email may have already been delivered.'
         );
       } else {
         setError(errorMessage);
@@ -325,8 +347,8 @@ export default function AuthPage() {
 
               <p className="text-gray-600 text-sm leading-relaxed">
                 We sent a verification link to{' '}
-                <strong className="text-gray-800">{verificationEmail}</strong>.
-                Please check your inbox and click the link to activate your account.
+                <strong className="text-gray-800">{verificationEmail}</strong>. Please check your
+                inbox and click the link to activate your account.
               </p>
 
               <p className="text-gray-500 text-xs">
@@ -400,15 +422,33 @@ export default function AuthPage() {
               className="w-full flex items-center justify-between px-4 py-3 hover:bg-gray-50 transition-colors"
             >
               <span className="font-medium text-gray-800">How it works</span>
-              <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${showHowItWorks ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-4 h-4 text-gray-500 transition-transform ${showHowItWorks ? 'rotate-180' : ''}`}
+              />
             </button>
             {showHowItWorks && (
               <ul className="px-4 pb-4 space-y-2 text-sm text-gray-600">
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">1.</span>After completing your exercises in your Inner Stance platform you can upload them here for a full overview.</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">2.</span>Optionally add more actions or reflections from the call directly in this app.</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">3.</span>Track daily habits — check off exercises every day and add notes.</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">4.</span>Organise everything by quarter so each period of the program has its own space.</li>
-                <li className="flex items-start gap-2"><span className="text-blue-500 font-bold mt-0.5">5.</span>Your answers are encrypted — only you can read them.</li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold mt-0.5">1.</span>After completing your
+                  exercises in your Inner Stance platform you can upload them here for a full
+                  overview.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold mt-0.5">2.</span>Optionally add more
+                  actions or reflections from the call directly in this app.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold mt-0.5">3.</span>Track daily habits —
+                  check off exercises every day and add notes.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold mt-0.5">4.</span>Organise everything by
+                  quarter so each period of the program has its own space.
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-500 font-bold mt-0.5">5.</span>Your answers are
+                  encrypted — only you can read them.
+                </li>
               </ul>
             )}
           </div>
@@ -420,12 +460,15 @@ export default function AuthPage() {
 
         <div className="bg-white rounded-2xl shadow-xl border border-gray-100 p-8">
           {error && (
-            <div className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 ${
-              error.toLowerCase().includes('rate limit') || error.toLowerCase().includes('wait')
-                ? 'bg-amber-50 border border-amber-200 text-amber-800'
-                : 'bg-red-50 border border-red-200 text-red-700'
-            }`}>
-              {error.toLowerCase().includes('rate limit') || error.toLowerCase().includes('wait') ? (
+            <div
+              className={`mb-6 p-4 rounded-lg text-sm flex items-start gap-3 ${
+                error.toLowerCase().includes('rate limit') || error.toLowerCase().includes('wait')
+                  ? 'bg-amber-50 border border-amber-200 text-amber-800'
+                  : 'bg-red-50 border border-red-200 text-red-700'
+              }`}
+            >
+              {error.toLowerCase().includes('rate limit') ||
+              error.toLowerCase().includes('wait') ? (
                 <Clock className="w-5 h-5 flex-shrink-0 mt-0.5" />
               ) : (
                 <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
@@ -444,9 +487,7 @@ export default function AuthPage() {
             {mode === 'signup' && (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Full Name
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                   <div className="relative">
                     <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
@@ -472,9 +513,7 @@ export default function AuthPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
@@ -493,18 +532,20 @@ export default function AuthPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   ref={passwordRef}
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={mode === 'signup' ? 'Create a password (min 6 characters)' : 'Enter your password'}
+                  placeholder={
+                    mode === 'signup'
+                      ? 'Create a password (min 6 characters)'
+                      : 'Enter your password'
+                  }
                   required
                   minLength={6}
                   autoComplete={mode === 'signup' ? 'off' : 'current-password'}
@@ -518,7 +559,7 @@ export default function AuthPage() {
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -598,13 +639,24 @@ export default function AuthPage() {
                     className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer"
                   />
                 </div>
-                <label htmlFor="terms-agreement" className="text-sm text-gray-600 cursor-pointer leading-tight">
+                <label
+                  htmlFor="terms-agreement"
+                  className="text-sm text-gray-600 cursor-pointer leading-tight"
+                >
                   I agree to the{' '}
-                  <a href="/terms" target="_blank" className="text-blue-600 hover:text-blue-700 underline">
+                  <a
+                    href="/terms"
+                    target="_blank"
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
                     Terms of Service
                   </a>{' '}
                   and{' '}
-                  <a href="/privacy" target="_blank" className="text-blue-600 hover:text-blue-700 underline">
+                  <a
+                    href="/privacy"
+                    target="_blank"
+                    className="text-blue-600 hover:text-blue-700 underline"
+                  >
                     Privacy Policy
                   </a>
                 </label>
@@ -612,11 +664,19 @@ export default function AuthPage() {
             ) : (
               <p className="text-sm text-gray-600 text-center">
                 By using this service you agree with our{' '}
-                <a href="/terms" target="_blank" className="text-blue-600 hover:text-blue-700 underline">
+                <a
+                  href="/terms"
+                  target="_blank"
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
                   Terms of Service
                 </a>{' '}
                 and{' '}
-                <a href="/privacy" target="_blank" className="text-blue-600 hover:text-blue-700 underline">
+                <a
+                  href="/privacy"
+                  target="_blank"
+                  className="text-blue-600 hover:text-blue-700 underline"
+                >
                   Privacy Policy
                 </a>
               </p>

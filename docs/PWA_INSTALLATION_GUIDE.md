@@ -9,12 +9,14 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 ## Features
 
 ### 1. Chromium Browsers (Chrome, Edge, Opera)
+
 - **Desktop & Android**: Automatic "Install App" button appears on the sign-in/sign-up page
 - Detects the `beforeinstallprompt` event
 - Shows native browser install dialog when clicked
 - Hides install button once app is installed
 
 ### 2. iOS Safari (iPhone & iPad)
+
 - Shows instructional card with step-by-step guide:
   1. Tap the Share button
   2. Scroll and tap "Add to Home Screen"
@@ -23,6 +25,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 - Does not show if app is already installed
 
 ### 3. Fallback Instructions
+
 - For browsers that don't support programmatic install
 - Shows instructions for:
   - Android Chrome: Menu → Add to Home screen
@@ -31,6 +34,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 ## Testing Checklist
 
 ### Android Chrome
+
 - [ ] Open the app in Chrome on Android
 - [ ] Navigate to the sign-in/sign-up page
 - [ ] Verify "Install App" button appears
@@ -41,6 +45,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 - [ ] Return to browser and verify install button no longer appears
 
 ### Desktop Chrome/Edge
+
 - [ ] Open the app in Chrome or Edge on desktop
 - [ ] Navigate to the sign-in/sign-up page
 - [ ] Verify "Install App" button appears (may take a few seconds)
@@ -51,6 +56,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 - [ ] Return to browser and verify install button no longer appears
 
 ### iOS Safari
+
 - [ ] Open the app in Safari on iPhone or iPad
 - [ ] Navigate to the sign-in/sign-up page
 - [ ] Verify instructional card appears with iOS-specific instructions
@@ -61,6 +67,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 - [ ] Reload page and verify card stays dismissed
 
 ### Fallback (Other Browsers)
+
 - [ ] Open the app in Firefox, Samsung Internet, or other browser
 - [ ] Navigate to the sign-in/sign-up page
 - [ ] Verify fallback instructions card appears
@@ -69,6 +76,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 ## Technical Requirements
 
 ### Manifest File (`/public/manifest.json`)
+
 ```json
 {
   "name": "Group Availability Planner",
@@ -84,11 +92,13 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 ```
 
 ### Service Worker
+
 - Basic caching strategy implemented
 - Provides offline fallback
 - Required for Chromium browsers to show install prompt
 
 ### HTML Meta Tags
+
 ```html
 <meta name="theme-color" content="#2563eb" />
 <link rel="manifest" href="/manifest.json" />
@@ -98,6 +108,7 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 ## Troubleshooting
 
 ### Install Button Doesn't Appear (Chrome/Edge)
+
 1. Verify app is served over HTTPS
 2. Check browser console for service worker registration errors
 3. Ensure manifest.json is accessible
@@ -106,12 +117,14 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 6. Check Chrome DevTools → Application → Manifest
 
 ### iOS Instructions Don't Show
+
 1. Verify you're using Safari (not Chrome on iOS)
 2. Check if already installed (opens in standalone mode)
 3. Check localStorage for 'ios-install-dismissed' key
 4. Clear Safari data and try again
 
 ### Service Worker Issues
+
 1. Open DevTools → Application → Service Workers
 2. Check for registration errors
 3. Try "Unregister" and reload
@@ -119,18 +132,19 @@ The Group Availability Planner is now installable as a Progressive Web App, allo
 
 ## Browser Support
 
-| Browser | Platform | Support Level |
-|---------|----------|---------------|
-| Chrome | Android | Full (native install prompt) |
-| Chrome | Desktop | Full (native install prompt) |
-| Edge | Desktop | Full (native install prompt) |
-| Safari | iOS | Manual (instructions shown) |
-| Firefox | All | Fallback (instructions shown) |
-| Other | All | Fallback (instructions shown) |
+| Browser | Platform | Support Level                 |
+| ------- | -------- | ----------------------------- |
+| Chrome  | Android  | Full (native install prompt)  |
+| Chrome  | Desktop  | Full (native install prompt)  |
+| Edge    | Desktop  | Full (native install prompt)  |
+| Safari  | iOS      | Manual (instructions shown)   |
+| Firefox | All      | Fallback (instructions shown) |
+| Other   | All      | Fallback (instructions shown) |
 
 ## Future Enhancements
 
 Potential improvements for future releases:
+
 - Enhanced offline functionality
 - Background sync for poll updates
 - Push notifications for poll responses

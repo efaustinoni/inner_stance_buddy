@@ -32,9 +32,7 @@ export default function DeleteConfirmModal({
                 <AlertTriangle className="w-6 h-6 text-red-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
-                  Delete Account
-                </h3>
+                <h3 className="text-lg font-semibold text-gray-900">Delete Account</h3>
                 <p className="text-sm text-gray-500">This action cannot be undone</p>
               </div>
             </div>
@@ -63,7 +61,9 @@ export default function DeleteConfirmModal({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-orange-600 mt-0.5">•</span>
-                  <span>All polls and related data (time slots, responses, votes) will be deleted</span>
+                  <span>
+                    All polls and related data (time slots, responses, votes) will be deleted
+                  </span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-orange-600 mt-0.5">•</span>
@@ -74,7 +74,8 @@ export default function DeleteConfirmModal({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Type <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">DELETE</span> to confirm
+                Type <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">DELETE</span> to
+                confirm
               </label>
               <input
                 type="text"

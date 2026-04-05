@@ -19,7 +19,7 @@ const SECURITY_QUESTIONS = [
   'What was your childhood nickname?',
   'What is the name of your favorite childhood friend?',
   'What was the make of your first car?',
-  'What is your mother\'s maiden name?',
+  "What is your mother's maiden name?",
   'What was the name of your elementary school?',
   'What is the middle name of your oldest sibling?',
   'In what city did your parents meet?',
@@ -87,7 +87,9 @@ export default function SecurityQuestionModal({
     setConfirmAnswer('');
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user || !user.email) {
         throw new Error('Not authenticated');
       }
@@ -163,7 +165,10 @@ export default function SecurityQuestionModal({
             <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
             <div className="text-sm text-amber-800">
               <p className="font-medium mb-1">Password Verification Required</p>
-              <p>To change your security question, verify your password. Your security question is used for password recovery when you're locked out of your account.</p>
+              <p>
+                To change your security question, verify your password. Your security question is
+                used for password recovery when you're locked out of your account.
+              </p>
             </div>
           </div>
 
@@ -173,9 +178,21 @@ export default function SecurityQuestionModal({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} autoComplete="off" data-form-type="other" className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            autoComplete="off"
+            data-form-type="other"
+            className="space-y-5"
+          >
             {/* Hidden field to prevent password managers from associating this with login */}
-            <input type="text" name="fakeusername" autoComplete="username" style={{ display: 'none' }} tabIndex={-1} aria-hidden="true" />
+            <input
+              type="text"
+              name="fakeusername"
+              autoComplete="username"
+              style={{ display: 'none' }}
+              tabIndex={-1}
+              aria-hidden="true"
+            />
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -184,7 +201,7 @@ export default function SecurityQuestionModal({
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   name="verification-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
@@ -199,19 +216,19 @@ export default function SecurityQuestionModal({
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
-              <p className="mt-1.5 text-xs text-gray-500">
-                Required to confirm your identity
-              </p>
+              <p className="mt-1.5 text-xs text-gray-500">Required to confirm your identity</p>
             </div>
 
             <div className="pt-4 border-t border-gray-200">
               <div className="mb-5 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                <h3 className="text-sm font-semibold text-blue-900 mb-1">Current Security Question</h3>
+                <h3 className="text-sm font-semibold text-blue-900 mb-1">
+                  Current Security Question
+                </h3>
                 <p className="text-sm text-blue-800">{currentQuestion || 'Not set'}</p>
               </div>
 
@@ -247,7 +264,7 @@ export default function SecurityQuestionModal({
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
-                      type={showNewAnswer ? "text" : "password"}
+                      type={showNewAnswer ? 'text' : 'password'}
                       name="security-answer"
                       value={newAnswer}
                       onChange={(e) => setNewAnswer(e.target.value)}
@@ -262,14 +279,12 @@ export default function SecurityQuestionModal({
                       type="button"
                       onClick={() => setShowNewAnswer(!showNewAnswer)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label={showNewAnswer ? "Hide answer" : "Show answer"}
+                      aria-label={showNewAnswer ? 'Hide answer' : 'Show answer'}
                     >
                       {showNewAnswer ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                     </button>
                   </div>
-                  <p className="mt-1.5 text-xs text-gray-500">
-                    Answers are case-insensitive
-                  </p>
+                  <p className="mt-1.5 text-xs text-gray-500">Answers are case-insensitive</p>
                 </div>
 
                 <div>
@@ -279,7 +294,7 @@ export default function SecurityQuestionModal({
                   <div className="relative">
                     <KeyRound className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <input
-                      type={showConfirmAnswer ? "text" : "password"}
+                      type={showConfirmAnswer ? 'text' : 'password'}
                       name="security-answer-confirm"
                       value={confirmAnswer}
                       onChange={(e) => setConfirmAnswer(e.target.value)}
@@ -294,9 +309,13 @@ export default function SecurityQuestionModal({
                       type="button"
                       onClick={() => setShowConfirmAnswer(!showConfirmAnswer)}
                       className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
-                      aria-label={showConfirmAnswer ? "Hide answer" : "Show answer"}
+                      aria-label={showConfirmAnswer ? 'Hide answer' : 'Show answer'}
                     >
-                      {showConfirmAnswer ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                      {showConfirmAnswer ? (
+                        <EyeOff className="w-5 h-5" />
+                      ) : (
+                        <Eye className="w-5 h-5" />
+                      )}
                     </button>
                   </div>
                 </div>

@@ -10,7 +10,12 @@ interface WeekSelectorProps {
   onQuarterChange: (qId: string | 'unassigned' | null) => void;
 }
 
-export function WeekSelector({ quarters, hasUnassigned, activeQuarterId, onQuarterChange }: WeekSelectorProps) {
+export function WeekSelector({
+  quarters,
+  hasUnassigned,
+  activeQuarterId,
+  onQuarterChange,
+}: WeekSelectorProps) {
   if (quarters.length === 0 && !hasUnassigned) return null;
 
   return (
@@ -25,7 +30,7 @@ export function WeekSelector({ quarters, hasUnassigned, activeQuarterId, onQuart
       >
         All
       </button>
-      {quarters.map(q => (
+      {quarters.map((q) => (
         <button
           key={q.id}
           onClick={() => onQuarterChange(activeQuarterId === q.id ? null : q.id)}

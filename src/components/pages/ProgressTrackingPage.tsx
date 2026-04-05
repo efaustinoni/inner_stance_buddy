@@ -2,7 +2,19 @@
 // Last Updated: 2026-02-14 01:10
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { ArrowLeft, Trash2, Check, Calendar, MessageSquare, ChevronDown, ChevronUp, FileText, Save, Home, ChevronRight } from 'lucide-react';
+import {
+  ArrowLeft,
+  Trash2,
+  Check,
+  Calendar,
+  MessageSquare,
+  ChevronDown,
+  ChevronUp,
+  FileText,
+  Save,
+  Home,
+  ChevronRight,
+} from 'lucide-react';
 import { Card } from '../ui/Card';
 import {
   fetchTrackerWithCheckIns,
@@ -10,7 +22,7 @@ import {
   updateCheckInNotes,
   deleteProgressTracker,
   type TrackerWithCheckIns,
-  type ProgressCheckIn
+  type ProgressCheckIn,
 } from '../../lib/exerciseService';
 
 interface ProgressTrackingPageProps {
@@ -21,7 +33,7 @@ interface ProgressTrackingPageProps {
 function Breadcrumb({
   weekNumber,
   weekTopic,
-  onNavigate
+  onNavigate,
 }: {
   weekNumber?: number;
   weekTopic?: string;
@@ -86,7 +98,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
   };
 
   const toggleExpanded = useCallback((dateStr: string) => {
-    setExpandedDates(prev => {
+    setExpandedDates((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(dateStr)) {
         newSet.delete(dateStr);
@@ -129,10 +141,10 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     const dateStr = formatDateStr(date);
     const newValue = !checkInsMap[dateStr];
     setSavingDate(dateStr);
-    setCheckInsMap(prev => ({ ...prev, [dateStr]: newValue }));
+    setCheckInsMap((prev) => ({ ...prev, [dateStr]: newValue }));
     const success = await toggleCheckIn(trackerId, dateStr, newValue);
     if (!success) {
-      setCheckInsMap(prev => ({ ...prev, [dateStr]: !newValue }));
+      setCheckInsMap((prev) => ({ ...prev, [dateStr]: !newValue }));
     }
     setSavingDate(null);
   };
@@ -144,9 +156,9 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     setSavingNotes(dateStr);
     const success = await updateCheckInNotes(trackerId, dateStr, notes);
     if (success) {
-      setNotesMap(prev => ({ ...prev, [dateStr]: notes }));
+      setNotesMap((prev) => ({ ...prev, [dateStr]: notes }));
     } else {
-      setEditingNotes(prev => ({ ...prev, [dateStr]: notesMap[dateStr] || '' }));
+      setEditingNotes((prev) => ({ ...prev, [dateStr]: notesMap[dateStr] || '' }));
     }
     setSavingNotes(null);
   };
@@ -176,7 +188,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     return date.toLocaleDateString('en-US', {
       month: 'short',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
@@ -184,7 +196,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -205,10 +217,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     return (
       <div className="text-center py-12">
         <p className="text-content-muted">Tracker not found</p>
-        <button
-          onClick={() => onNavigate('/')}
-          className="mt-4 text-accent-blue hover:underline"
-        >
+        <button onClick={() => onNavigate('/')} className="mt-4 text-accent-blue hover:underline">
           Go back
         </button>
       </div>
@@ -300,122 +309,134 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
         </div>
 
         <div className="space-y-2">
-          {dates.slice().reverse().map((date) => {
-            const dateStr = formatDateStr(date);
-            const isDone = checkInsMap[dateStr] || false;
-            const isSaving = savingDate === dateStr;
-            const isSavingNote = savingNotes === dateStr;
-            const today = isToday(date);
-            const isExpanded = expandedDates.has(dateStr);
-            const hasNotes = !!(notesMap[dateStr] || editingNotes[dateStr]);
+          {dates
+            .slice()
+            .reverse()
+            .map((date) => {
+              const dateStr = formatDateStr(date);
+              const isDone = checkInsMap[dateStr] || false;
+              const isSaving = savingDate === dateStr;
+              const isSavingNote = savingNotes === dateStr;
+              const today = isToday(date);
+              const isExpanded = expandedDates.has(dateStr);
+              const hasNotes = !!(notesMap[dateStr] || editingNotes[dateStr]);
 
-            return (
-              <div
-                key={dateStr}
-                className={`
+              return (
+                <div
+                  key={dateStr}
+                  className={`
                   rounded-lg overflow-hidden transition-all
                   ${today ? 'bg-accent-blue/10 border border-accent-blue/30' : 'bg-navy-800/50'}
                 `}
-              >
-                <div
-                  onClick={() => toggleExpanded(dateStr)}
-                  className={`
+                >
+                  <div
+                    onClick={() => toggleExpanded(dateStr)}
+                    className={`
                     w-full flex items-center justify-between p-3 sm:p-4 cursor-pointer
                     ${!isExpanded && !today ? 'hover:bg-navy-700' : ''}
                     transition-colors
                   `}
-                >
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={(e) => handleToggle(date, e)}
-                      disabled={isSaving}
-                      className="shrink-0"
-                    >
-                      <div
-                        className={`
+                  >
+                    <div className="flex items-center gap-3">
+                      <button
+                        onClick={(e) => handleToggle(date, e)}
+                        disabled={isSaving}
+                        className="shrink-0"
+                      >
+                        <div
+                          className={`
                           w-6 h-6 rounded-md flex items-center justify-center transition-all
-                          ${isDone
-                            ? 'bg-status-success text-white'
-                            : 'bg-navy-700 border-2 border-navy-600 hover:border-navy-500'
+                          ${
+                            isDone
+                              ? 'bg-status-success text-white'
+                              : 'bg-navy-700 border-2 border-navy-600 hover:border-navy-500'
                           }
                         `}
-                      >
-                        {isSaving ? (
-                          <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : isDone ? (
-                          <Check size={14} />
-                        ) : null}
-                      </div>
-                    </button>
-                    <div className="text-left">
-                      <p className={`text-sm font-medium ${today ? 'text-accent-blue' : 'text-content-inverse'}`}>
-                        {formatDateDisplay(date)}
-                        {today && <span className="ml-2 text-xs">(Today)</span>}
-                      </p>
-                    </div>
-                    {hasNotes && !isExpanded ? (
-                      <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 rounded-full">
-                        <FileText size={12} className="text-amber-400" />
-                        <span className="text-xs text-amber-400">Notes</span>
-                      </div>
-                    ) : !isExpanded && (
-                      <span className="text-xs text-content-muted/50 hover:text-amber-400/70 transition-colors">
-                        + Add notes
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className={`text-sm ${isDone ? 'text-status-success' : 'text-content-muted'}`}>
-                      {isDone ? 'Done' : 'Not done'}
-                    </span>
-                    {isExpanded ? (
-                      <ChevronUp size={16} className="text-content-muted" />
-                    ) : (
-                      <ChevronDown size={16} className="text-content-muted" />
-                    )}
-                  </div>
-                </div>
-
-                {isExpanded && (
-                  <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-3 border-t border-navy-700/50">
-                    <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl p-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="p-1.5 bg-amber-500/20 rounded-lg">
-                          <FileText size={14} className="text-amber-400" />
+                        >
+                          {isSaving ? (
+                            <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                          ) : isDone ? (
+                            <Check size={14} />
+                          ) : null}
                         </div>
-                        <span className="text-sm font-medium text-amber-400">Daily Journal</span>
+                      </button>
+                      <div className="text-left">
+                        <p
+                          className={`text-sm font-medium ${today ? 'text-accent-blue' : 'text-content-inverse'}`}
+                        >
+                          {formatDateDisplay(date)}
+                          {today && <span className="ml-2 text-xs">(Today)</span>}
+                        </p>
                       </div>
-                      <textarea
-                        value={editingNotes[dateStr] || ''}
-                        onChange={(e) => setEditingNotes(prev => ({ ...prev, [dateStr]: e.target.value }))}
-                        placeholder="What happened today? How did you feel? What did you learn?"
-                        className="w-full min-h-[100px] p-3 bg-navy-900/80 border border-amber-500/30 rounded-lg text-sm text-content-inverse placeholder-amber-600/50 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 resize-y"
-                      />
-                      <div className="flex items-center justify-between mt-3">
-                        <span className="text-xs text-amber-500/60">
-                          {(editingNotes[dateStr] || '').length} characters
-                        </span>
-                        {hasNotesChanged(dateStr) && (
-                          <button
-                            onClick={() => handleSaveNotes(dateStr)}
-                            disabled={isSavingNote}
-                            className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-navy-900 rounded-lg text-xs font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/20"
-                          >
-                            {isSavingNote ? (
-                              <div className="w-3 h-3 border-2 border-navy-900 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <Save size={12} />
-                            )}
-                            Save Notes
-                          </button>
-                        )}
-                      </div>
+                      {hasNotes && !isExpanded ? (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/20 rounded-full">
+                          <FileText size={12} className="text-amber-400" />
+                          <span className="text-xs text-amber-400">Notes</span>
+                        </div>
+                      ) : (
+                        !isExpanded && (
+                          <span className="text-xs text-content-muted/50 hover:text-amber-400/70 transition-colors">
+                            + Add notes
+                          </span>
+                        )
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={`text-sm ${isDone ? 'text-status-success' : 'text-content-muted'}`}
+                      >
+                        {isDone ? 'Done' : 'Not done'}
+                      </span>
+                      {isExpanded ? (
+                        <ChevronUp size={16} className="text-content-muted" />
+                      ) : (
+                        <ChevronDown size={16} className="text-content-muted" />
+                      )}
                     </div>
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {isExpanded && (
+                    <div className="px-3 sm:px-4 pb-3 sm:pb-4 pt-3 border-t border-navy-700/50">
+                      <div className="bg-gradient-to-br from-amber-500/10 to-orange-500/5 border border-amber-500/20 rounded-xl p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="p-1.5 bg-amber-500/20 rounded-lg">
+                            <FileText size={14} className="text-amber-400" />
+                          </div>
+                          <span className="text-sm font-medium text-amber-400">Daily Journal</span>
+                        </div>
+                        <textarea
+                          value={editingNotes[dateStr] || ''}
+                          onChange={(e) =>
+                            setEditingNotes((prev) => ({ ...prev, [dateStr]: e.target.value }))
+                          }
+                          placeholder="What happened today? How did you feel? What did you learn?"
+                          className="w-full min-h-[100px] p-3 bg-navy-900/80 border border-amber-500/30 rounded-lg text-sm text-content-inverse placeholder-amber-600/50 focus:outline-none focus:border-amber-400/50 focus:ring-1 focus:ring-amber-400/20 resize-y"
+                        />
+                        <div className="flex items-center justify-between mt-3">
+                          <span className="text-xs text-amber-500/60">
+                            {(editingNotes[dateStr] || '').length} characters
+                          </span>
+                          {hasNotesChanged(dateStr) && (
+                            <button
+                              onClick={() => handleSaveNotes(dateStr)}
+                              disabled={isSavingNote}
+                              className="flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-navy-900 rounded-lg text-xs font-semibold hover:bg-amber-400 transition-colors disabled:opacity-50 shadow-lg shadow-amber-500/20"
+                            >
+                              {isSavingNote ? (
+                                <div className="w-3 h-3 border-2 border-navy-900 border-t-transparent rounded-full animate-spin" />
+                              ) : (
+                                <Save size={12} />
+                              )}
+                              Save Notes
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
 
         <p className="text-xs text-content-muted mt-4 text-center">
@@ -434,7 +455,8 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
               Delete Progress Tracker?
             </h3>
             <p className="text-content-muted mb-6">
-              This will permanently delete all your check-in history for this question. This action cannot be undone.
+              This will permanently delete all your check-in history for this question. This action
+              cannot be undone.
             </p>
             <div className="flex gap-3 justify-end">
               <button

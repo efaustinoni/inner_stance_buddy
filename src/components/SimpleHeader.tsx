@@ -16,7 +16,9 @@ export default function SimpleHeader() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
 
         if (user) {
@@ -41,7 +43,9 @@ export default function SimpleHeader() {
 
     loadUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadUser();
@@ -76,8 +80,12 @@ export default function SimpleHeader() {
           href="/"
           className="flex items-center gap-2 text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors"
         >
-          <div className={`w-8 h-8 ${appConfig.branding.logoBackgroundColor} rounded-lg flex items-center justify-center`}>
-            <span className={`${appConfig.branding.logoTextColor} font-bold text-sm`}>{appConfig.branding.appInitials}</span>
+          <div
+            className={`w-8 h-8 ${appConfig.branding.logoBackgroundColor} rounded-lg flex items-center justify-center`}
+          >
+            <span className={`${appConfig.branding.logoTextColor} font-bold text-sm`}>
+              {appConfig.branding.appInitials}
+            </span>
           </div>
           <span>{appConfig.branding.appName}</span>
         </a>
@@ -95,9 +103,7 @@ export default function SimpleHeader() {
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <UserIcon className="w-4 h-4 text-blue-600" />
             </div>
-            <span className="text-sm font-medium max-w-[150px] truncate">
-              {displayName}
-            </span>
+            <span className="text-sm font-medium max-w-[150px] truncate">{displayName}</span>
           </a>
           <div className="w-px h-6 bg-gray-200" />
           <button

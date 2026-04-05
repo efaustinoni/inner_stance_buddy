@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
 - 2026-04-03 07:43 UTC: Manage Weeks redesigned as collapsible week list (v1.4.0)
   - All weeks of the selected quarter shown as a list; each starts collapsed
   - Click a week header to expand and see its questions (loaded on demand)
@@ -60,6 +61,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Multi-part answers can be separated with `|` and will be displayed on individual lines in the answer field
 
 ### Fixed
+
 - 2026-04-02 16:20 UTC: Edge function JWT verification disabled for extract-questions-from-image (fixes 401 errors)
 - 2026-04-02 16:15 UTC: Image extraction error messages now show actual failure reason
 - 2026-04-02 15:55 UTC: Quarter filter on dashboard had no effect (missing dependency in useMemo)
@@ -100,6 +102,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - 2026-02-06: "Forgot password?" link on the sign-in form
 
 ### Fixed
+
 - 2026-02-13: Database optimization - removed unused index `idx_user_terms_agreements_user_id`
   - Index had 0 scans since creation, indicating it was not being used
   - Improves INSERT/UPDATE/DELETE performance by eliminating index maintenance overhead
@@ -118,6 +121,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Edge Function uses matching SHA-256 hash comparison for verification
 
 ### Changed
+
 - 2025-12-28: Timezone picker completely redesigned with hierarchical navigation
   - Removed "Popular" section
   - Added continent-level grouping (North America and South America as separate continents)
@@ -137,6 +141,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.1.0] - 2025-12-21
 
 ### Added
+
 - User authentication with email/password via Supabase
 - User profile management with display name and timezone
 - Account deletion with soft delete and 15-day retention period

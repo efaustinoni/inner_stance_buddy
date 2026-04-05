@@ -37,7 +37,7 @@
 2. Open bolt.new → Git panel → **Pull** → bolt.new deploys the function.
 3. If the function requires secrets (`OPENAI_API_KEY`, etc.), set them in:
    **Supabase dashboard → Settings → Edge Functions → Secrets**
-   *(Note: bolt.new frontend secrets and Supabase Edge Function secrets are separate stores)*
+   _(Note: bolt.new frontend secrets and Supabase Edge Function secrets are separate stores)_
 4. Test the function by triggering it from the app.
 
 ---
@@ -53,6 +53,7 @@
 ## Rollback
 
 If a deployment breaks the app:
+
 1. Oz reverts the relevant commits and pushes.
 2. Open bolt.new → Git panel → **Pull** → rollback deploys.
 3. If a migration also ran and needs to be undone, that must be handled manually in the Supabase SQL Editor.
@@ -60,7 +61,9 @@ If a deployment breaks the app:
 ---
 
 ## Version bumping
+
 When bumping the version, always update **both** of these together in the same commit:
+
 1. `src/lib/appConfig.ts` — `versionLabel: 'v.X.Y.Z Beta'`
 2. `public/service-worker.js` — `const CACHE_NAME = 'exercise-journal-vX.Y.Z'`
 
@@ -70,8 +73,8 @@ If the service worker cache name is not updated, users' browsers will keep servi
 
 ## Lessons learned
 
-| Date | Lesson |
-|---|---|
+| Date       | Lesson                                                                                                                                                                                                      |
+| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 2026-04-02 | Never deploy frontend code that reads from `decrypted_*` views before the migration that creates those views has been applied. Always separate migration commits from frontend commits and deploy in order. |
-| 2026-04-02 | bolt.new secrets ≠ Supabase Edge Function secrets. Set Edge Function secrets in the Supabase dashboard, not in bolt.new. |
-| 2026-04-02 | bolt.new does not auto-pull from GitHub — you must manually pull in the Git panel after Oz pushes. |
+| 2026-04-02 | bolt.new secrets ≠ Supabase Edge Function secrets. Set Edge Function secrets in the Supabase dashboard, not in bolt.new.                                                                                    |
+| 2026-04-02 | bolt.new does not auto-pull from GitHub — you must manually pull in the Git panel after Oz pushes.                                                                                                          |

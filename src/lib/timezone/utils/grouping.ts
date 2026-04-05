@@ -12,7 +12,9 @@ let cachedTimezones: TimezoneOption[] | null = null;
 function getAllIANATimezones(): string[] {
   if (typeof Intl !== 'undefined' && 'supportedValuesOf' in Intl) {
     try {
-      return (Intl as { supportedValuesOf: (key: string) => string[] }).supportedValuesOf('timeZone');
+      return (
+        Intl as unknown as { supportedValuesOf: (key: string) => string[] }
+      ).supportedValuesOf('timeZone');
     } catch {
       // Fallback below
     }
@@ -58,7 +60,10 @@ export function getAllTimezones(): TimezoneOption[] {
     const continentOrderA = CONTINENT_ORDER.indexOf(a.continent);
     const continentOrderB = CONTINENT_ORDER.indexOf(b.continent);
     if (continentOrderA !== continentOrderB) {
-      return (continentOrderA === -1 ? 999 : continentOrderA) - (continentOrderB === -1 ? 999 : continentOrderB);
+      return (
+        (continentOrderA === -1 ? 999 : continentOrderA) -
+        (continentOrderB === -1 ? 999 : continentOrderB)
+      );
     }
     if (a.country !== b.country) {
       return a.country.localeCompare(b.country);
@@ -125,12 +130,12 @@ export function getTimezonesByRegion(): Record<string, TimezoneOption[]> {
 }
 
 export function getTimezoneLabel(value: string): string {
-  const tz = getAllTimezones().find(t => t.value === value);
+  const tz = getAllTimezones().find((t) => t.value === value);
   return tz ? tz.label : prettifyTimezoneName(value);
 }
 
 export function getTimezoneDisplayLabel(timezone: string): string {
-  const tz = getAllTimezones().find(t => t.value === timezone);
+  const tz = getAllTimezones().find((t) => t.value === timezone);
   if (tz?.isCapital && tz?.capitalLabel) {
     return tz.capitalLabel;
   }

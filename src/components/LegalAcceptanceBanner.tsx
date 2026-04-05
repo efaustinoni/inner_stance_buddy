@@ -14,7 +14,6 @@ interface LegalAcceptanceBannerProps {
 
 export default function LegalAcceptanceBanner({
   status,
-  manifest,
   onAccept,
   onSignOut,
 }: LegalAcceptanceBannerProps) {
@@ -63,7 +62,8 @@ export default function LegalAcceptanceBanner({
             Updated Legal Documents
           </h2>
           <p className="text-slate-600 text-center mb-6">
-            We've updated our legal documents. Please review and accept them to continue using the app.
+            We've updated our legal documents. Please review and accept them to continue using the
+            app.
           </p>
 
           <div className="bg-slate-50 rounded-xl p-4 mb-6">
@@ -106,8 +106,7 @@ export default function LegalAcceptanceBanner({
               </>
             ) : (
               <>
-                <Check className="w-5 h-5" />
-                I Accept the Updated Terms
+                <Check className="w-5 h-5" />I Accept the Updated Terms
               </>
             )}
           </button>
@@ -162,11 +161,7 @@ export default function LegalAcceptanceBanner({
               disabled={accepting}
               className="px-4 py-1.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 flex items-center gap-2"
             >
-              {accepting ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                'Accept'
-              )}
+              {accepting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Accept'}
             </button>
             <button
               onClick={onSignOut}

@@ -21,8 +21,12 @@ input:-webkit-autofill::first-line {
 
 /* Animation for detecting autofill */
 @keyframes onAutoFillStart {
-  from { opacity: 0.99; }
-  to { opacity: 1; }
+  from {
+    opacity: 0.99;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 input:-webkit-autofill {

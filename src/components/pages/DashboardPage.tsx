@@ -2,7 +2,18 @@
 // Last Updated: 2026-04-02 20:43 UTC (reset collapsed weeks when quarter filter changes)
 
 import { useState, useEffect, useMemo } from 'react';
-import { Search, Filter, Target, MessageSquare, ChevronRight, Activity, BookOpen, X, Settings, ChevronDown } from 'lucide-react';
+import {
+  Search,
+  Filter,
+  Target,
+  MessageSquare,
+  ChevronRight,
+  Activity,
+  BookOpen,
+  X,
+  Settings,
+  ChevronDown,
+} from 'lucide-react';
 import { Card } from '../ui/Card';
 import {
   fetchDashboardData,
@@ -10,7 +21,7 @@ import {
   moveWeekToQuarter,
   type ExerciseWeek,
   type ExerciseQuarter,
-  type DashboardQuestion
+  type DashboardQuestion,
 } from '../../lib/exerciseService';
 
 interface DashboardPageProps {
@@ -50,13 +61,8 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     setLoading(false);
   };
 
-  const handleAssignWeekToQuarter = async (weekId: string, quarterId: string) => {
-    await moveWeekToQuarter(weekId, quarterId);
-    await loadData();
-  };
-
   const toggleQuarterCollapse = (key: string) => {
-    setCollapsedQuarters(prev => {
+    setCollapsedQuarters((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
@@ -65,7 +71,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   };
 
   const toggleWeekCollapse = (weekId: string) => {
-    setCollapsedWeeks(prev => {
+    setCollapsedWeeks((prev) => {
       const next = new Set(prev);
       if (next.has(weekId)) next.delete(weekId);
       else next.add(weekId);
@@ -82,27 +88,28 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     let result = questions;
 
     if (selectedQuarter === '__unassigned__') {
-      result = result.filter(q => !q.quarter_id);
+      result = result.filter((q) => !q.quarter_id);
     } else if (selectedQuarter) {
-      result = result.filter(q => q.quarter_id === selectedQuarter);
+      result = result.filter((q) => q.quarter_id === selectedQuarter);
     }
 
     if (selectedWeek) {
-      result = result.filter(q => q.week_id === selectedWeek);
+      result = result.filter((q) => q.week_id === selectedWeek);
     }
 
     if (filterMode === 'tracked') {
-      result = result.filter(q => q.tracker_id);
+      result = result.filter((q) => q.tracker_id);
     } else if (filterMode === 'untracked') {
-      result = result.filter(q => !q.tracker_id);
+      result = result.filter((q) => !q.tracker_id);
     }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(q =>
-        q.question_text.toLowerCase().includes(query) ||
-        q.question_label.toLowerCase().includes(query) ||
-        q.answer_text?.toLowerCase().includes(query)
+      result = result.filter(
+        (q) =>
+          q.question_text.toLowerCase().includes(query) ||
+          q.question_label.toLowerCase().includes(query) ||
+          q.answer_text?.toLowerCase().includes(query)
       );
     }
 
@@ -111,16 +118,22 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   const stats = useMemo(() => {
     const total = questions.length;
-    const answered = questions.filter(q => q.answer_text).length;
-    const tracked = questions.filter(q => q.tracker_id).length;
+    const answered = questions.filter((q) => q.answer_text).length;
+    const tracked = questions.filter((q) => q.tracker_id).length;
     return { total, answered, tracked };
   }, [questions]);
 
   // Group by quarter then by week_id (not week_number, since same number can appear in multiple quarters)
   const groupedByQuarterAndWeek = useMemo(() => {
-    const quarterGroups: Map<string, { label: string; weeks: Map<string, { weekNumber: number; topic: string; questions: DashboardQuestion[] }> }> = new Map();
+    const quarterGroups: Map<
+      string,
+      {
+        label: string;
+        weeks: Map<string, { weekNumber: number; topic: string; questions: DashboardQuestion[] }>;
+      }
+    > = new Map();
 
-    filteredQuestions.forEach(q => {
+    filteredQuestions.forEach((q) => {
       const qKey = q.quarter_id ?? '__unassigned__';
       const qLabel = q.quarter_label ?? 'Unassigned';
 
@@ -139,8 +152,8 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     return Array.from(quarterGroups.entries()).sort((a, b) => {
       if (a[0] === '__unassigned__') return 1;
       if (b[0] === '__unassigned__') return -1;
-      const ai = quarters.findIndex(q => q.id === a[0]);
-      const bi = quarters.findIndex(q => q.id === b[0]);
+      const ai = quarters.findIndex((q) => q.id === a[0]);
+      const bi = quarters.findIndex((q) => q.id === b[0]);
       return ai - bi;
     });
   }, [filteredQuestions, quarters]);
@@ -152,7 +165,8 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     setSearchQuery('');
   };
 
-  const hasActiveFilters = selectedWeek || selectedQuarter || filterMode !== 'all' || searchQuery.trim();
+  const hasActiveFilters =
+    selectedWeek || selectedQuarter || filterMode !== 'all' || searchQuery.trim();
 
   if (loading) {
     return (
@@ -217,7 +231,10 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       <Card variant="elevated" className="p-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1 relative">
-            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted" />
+            <Search
+              size={18}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-content-muted"
+            />
             <input
               type="text"
               value={searchQuery}
@@ -231,12 +248,17 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
             {quarters.length > 0 && (
               <select
                 value={selectedQuarter || ''}
-                onChange={(e) => { setSelectedQuarter(e.target.value || null); setSelectedWeek(null); }}
+                onChange={(e) => {
+                  setSelectedQuarter(e.target.value || null);
+                  setSelectedWeek(null);
+                }}
                 className="px-3 py-2.5 bg-navy-800 border border-navy-700 rounded-lg text-content-inverse focus:outline-none focus:border-accent-blue transition-colors"
               >
                 <option value="">All Quarters</option>
-                {quarters.map(q => (
-                  <option key={q.id} value={q.id}>{q.label}</option>
+                {quarters.map((q) => (
+                  <option key={q.id} value={q.id}>
+                    {q.label}
+                  </option>
                 ))}
                 <option value="__unassigned__">Unassigned</option>
               </select>
@@ -248,8 +270,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
             >
               <option value="">All Weeks</option>
               {weeks
-                .filter(w => !selectedQuarter || (selectedQuarter === '__unassigned__' ? !w.quarter_id : w.quarter_id === selectedQuarter))
-                .map(week => (
+                .filter(
+                  (w) =>
+                    !selectedQuarter ||
+                    (selectedQuarter === '__unassigned__'
+                      ? !w.quarter_id
+                      : w.quarter_id === selectedQuarter)
+                )
+                .map((week) => (
                   <option key={week.id} value={week.id}>
                     Week {week.week_number} - {week.topic}
                   </option>
@@ -296,12 +324,14 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
             <span className="text-xs text-content-muted">Active filters:</span>
             {selectedQuarter && (
               <span className="px-2 py-1 text-xs bg-accent-gold/20 text-accent-gold rounded">
-                {selectedQuarter === '__unassigned__' ? 'Unassigned' : quarters.find(q => q.id === selectedQuarter)?.label}
+                {selectedQuarter === '__unassigned__'
+                  ? 'Unassigned'
+                  : quarters.find((q) => q.id === selectedQuarter)?.label}
               </span>
             )}
             {selectedWeek && (
               <span className="px-2 py-1 text-xs bg-navy-700 text-content-inverse rounded">
-                Week {weeks.find(w => w.id === selectedWeek)?.week_number}
+                Week {weeks.find((w) => w.id === selectedWeek)?.week_number}
               </span>
             )}
             {filterMode !== 'all' && (
@@ -347,7 +377,9 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
         <div className="space-y-8">
           {groupedByQuarterAndWeek.map(([quarterKey, { label: quarterLabel, weeks: weekMap }]) => {
             const isCollapsed = collapsedQuarters.has(quarterKey);
-            const weekEntries = Array.from(weekMap.entries()).sort((a, b) => a[1].weekNumber - b[1].weekNumber);
+            const weekEntries = Array.from(weekMap.entries()).sort(
+              (a, b) => a[1].weekNumber - b[1].weekNumber
+            );
             const totalQuestions = weekEntries.reduce((sum, [, w]) => sum + w.questions.length, 0);
 
             return (
@@ -357,15 +389,18 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                   onClick={() => toggleQuarterCollapse(quarterKey)}
                   className="flex items-center gap-3 w-full mb-4 group"
                 >
-                  <span className={`px-3 py-1 text-sm font-semibold rounded-lg ${
-                    quarterKey === '__unassigned__'
-                      ? 'bg-navy-700 text-content-muted'
-                      : 'bg-accent-gold/20 text-accent-gold'
-                  }`}>
+                  <span
+                    className={`px-3 py-1 text-sm font-semibold rounded-lg ${
+                      quarterKey === '__unassigned__'
+                        ? 'bg-navy-700 text-content-muted'
+                        : 'bg-accent-gold/20 text-accent-gold'
+                    }`}
+                  >
                     {quarterLabel}
                   </span>
                   <span className="text-xs text-content-muted">
-                    {weekEntries.length} week{weekEntries.length !== 1 ? 's' : ''} · {totalQuestions} question{totalQuestions !== 1 ? 's' : ''}
+                    {weekEntries.length} week{weekEntries.length !== 1 ? 's' : ''} ·{' '}
+                    {totalQuestions} question{totalQuestions !== 1 ? 's' : ''}
                   </span>
                   <ChevronDown
                     size={16}
@@ -406,8 +441,10 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                                 className="px-2 py-1 text-xs bg-navy-700 border border-navy-600 rounded text-content-muted hover:border-accent-blue focus:outline-none focus:border-accent-blue transition-colors cursor-pointer shrink-0"
                               >
                                 <option value="">— No quarter —</option>
-                                {quarters.map(q => (
-                                  <option key={q.id} value={q.id}>{q.label}</option>
+                                {quarters.map((q) => (
+                                  <option key={q.id} value={q.id}>
+                                    {q.label}
+                                  </option>
                                 ))}
                               </select>
                             )}
@@ -417,7 +454,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                           </div>
                           {!isWeekCollapsed && (
                             <div className="space-y-2">
-                              {wqs.map(question => (
+                              {wqs.map((question) => (
                                 <QuestionCard
                                   key={question.id}
                                   question={question}
@@ -460,16 +497,15 @@ function QuestionCard({ question, onNavigate }: QuestionCardProps) {
       className="w-full text-left bg-navy-800/50 hover:bg-navy-800 border border-navy-700 rounded-lg p-4 transition-all group"
     >
       <div className="flex items-start gap-3">
-        <div className={`p-2 rounded-lg shrink-0 ${
-          question.tracker_id
-            ? 'bg-accent-gold/20'
-            : 'bg-navy-700'
-        }`}>
-          <Target size={18} className={
-            question.tracker_id
-              ? 'text-accent-gold'
-              : 'text-content-muted'
-          } />
+        <div
+          className={`p-2 rounded-lg shrink-0 ${
+            question.tracker_id ? 'bg-accent-gold/20' : 'bg-navy-700'
+          }`}
+        >
+          <Target
+            size={18}
+            className={question.tracker_id ? 'text-accent-gold' : 'text-content-muted'}
+          />
         </div>
 
         <div className="flex-1 min-w-0">
@@ -488,13 +524,20 @@ function QuestionCard({ question, onNavigate }: QuestionCardProps) {
             <div className="flex items-center gap-2 mt-2">
               <Activity size={12} className="text-accent-gold" />
               <span className="text-xs text-accent-gold">
-                Tracking since {new Date(question.tracker_started_at! + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                Tracking since{' '}
+                {new Date(question.tracker_started_at! + 'T00:00:00').toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
               </span>
             </div>
           )}
         </div>
 
-        <ChevronRight size={18} className="text-content-muted group-hover:text-content-inverse transition-colors shrink-0 mt-1" />
+        <ChevronRight
+          size={18}
+          className="text-content-muted group-hover:text-content-inverse transition-colors shrink-0 mt-1"
+        />
       </div>
     </button>
   );

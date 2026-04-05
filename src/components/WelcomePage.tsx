@@ -13,7 +13,9 @@ export default function WelcomePage() {
   useEffect(() => {
     const loadUserProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
 
         if (user) {
           const { data: profile } = await supabase
@@ -77,9 +79,7 @@ export default function WelcomePage() {
                   <h3 className="font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
                     Manage Profile
                   </h3>
-                  <p className="text-sm text-gray-600">
-                    View and update your personal information
-                  </p>
+                  <p className="text-sm text-gray-600">View and update your personal information</p>
                 </div>
               </a>
             </div>

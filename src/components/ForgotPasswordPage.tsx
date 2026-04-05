@@ -19,7 +19,7 @@ export default function ForgotPasswordPage() {
 
   const headers = {
     'Content-Type': 'application/json',
-    'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
+    Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`,
   };
 
   async function handleEmailSubmit(e: React.FormEvent) {
@@ -44,7 +44,9 @@ export default function ForgotPasswordPage() {
         setSecurityQuestion(data.question);
         setStep('question');
       } else {
-        setError('No account found with this email address, or no security question was set up for this account.');
+        setError(
+          'No account found with this email address, or no security question was set up for this account.'
+        );
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
@@ -228,7 +230,11 @@ export default function ForgotPasswordPage() {
               <div className="mt-6 pt-5 border-t border-gray-100 text-center">
                 <button
                   type="button"
-                  onClick={() => { setStep('email'); setError(null); setSecurityAnswer(''); }}
+                  onClick={() => {
+                    setStep('email');
+                    setError(null);
+                    setSecurityAnswer('');
+                  }}
                   className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 font-medium transition-colors"
                 >
                   <ArrowLeft className="w-4 h-4" />
@@ -248,8 +254,8 @@ export default function ForgotPasswordPage() {
 
               <p className="text-gray-600 text-sm leading-relaxed">
                 We've sent a password reset link to{' '}
-                <strong className="text-gray-800">{email}</strong>.
-                Click the link in the email to set a new password.
+                <strong className="text-gray-800">{email}</strong>. Click the link in the email to
+                set a new password.
               </p>
 
               <p className="text-gray-500 text-xs">

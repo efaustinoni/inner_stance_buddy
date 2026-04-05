@@ -21,10 +21,7 @@ export function MainNavigation({
     <header className="bg-navy-900 border-b border-navy-800 sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16">
-          <button
-            onClick={() => onNavigate('/')}
-            className="flex items-center gap-3"
-          >
+          <button onClick={() => onNavigate('/')} className="flex items-center gap-3">
             <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-gradient-to-br from-accent-gold to-yellow-600">
               <BookOpen size={20} className="text-white" />
             </div>

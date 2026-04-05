@@ -1,5 +1,7 @@
 # Exercise Tracker Application Implementation Plan
+
 # Created: 2026-02-13
+
 # Last Updated: 2026-02-13
 
 This document outlines the phased implementation plan for the Exercise Tracker application - a personal journal for capturing weekly coaching program exercises and answers.
@@ -9,6 +11,7 @@ This document outlines the phased implementation plan for the Exercise Tracker a
 ## Application Overview
 
 The Exercise Tracker allows users to:
+
 - Create and manage weekly exercise modules from their coaching program
 - Add questions manually or bulk import them by pasting from the official platform
 - Record their answers to each reflection question and action item
@@ -20,23 +23,27 @@ The Exercise Tracker allows users to:
 ## Core Features (Implemented)
 
 ### Exercise Week Management
+
 - Create weeks with: Week Number, Module Title (e.g., "Power"), Topic (e.g., "War on Weakness")
 - Edit and delete existing weeks
 - Navigate between weeks with Previous/Next buttons and week tabs
 
 ### Question Management
+
 - Add individual questions with Label (e.g., "Reflectie 1a") and full question text
 - Edit and delete questions
 - Bulk import questions by pasting formatted text from the official platform
 - Questions are displayed in order within each week
 
 ### Answer Entry
+
 - Each question has an amber-colored text area matching the official platform style
 - Auto-save functionality with save button for manual saves
 - Character count indicator
 - Visual feedback when changes are saved
 
 ### Data Privacy
+
 - All data is user-owned via Row Level Security
 - Users can only see and modify their own exercises
 - No admin access to user exercise content
@@ -344,29 +351,37 @@ The Exercise Tracker allows users to:
 ### Database Tables to Create
 
 **user_roles table:**
+
 - id, user_id (FK to auth.users), role (enum: user, admin), created_at
 
 **programs table:**
+
 - id, name, description, icon_url, created_at
 
 **program_weeks table:**
+
 - id, program_id, week_number, title, description, theme
 
 **exercises table:**
+
 - id, week_id, title, description, content_type, content_url, duration_minutes, sequence
 
 **user_program_enrollments table:**
+
 - id, user_id, program_id, enrolled_at, current_week
 
 **user_exercise_completions table:**
+
 - id, user_id, exercise_id, completed_at, notes
 
 **user_daily_notes table:**
+
 - id, user_id, date, content, created_at, updated_at
 
 ### RLS Policies (Privacy-First)
 
 **User Data Tables (completions, notes, achievements):**
+
 ```sql
 - SELECT: auth.uid() = user_id (users see only own data)
 - INSERT: auth.uid() = user_id (users create only own data)
@@ -376,12 +391,14 @@ The Exercise Tracker allows users to:
 ```
 
 **Program Content Tables (programs, weeks, exercises):**
+
 ```sql
 - SELECT: All authenticated users can read
 - INSERT/UPDATE/DELETE: Only admin role
 ```
 
 **User Accounts (for admin):**
+
 ```sql
 - Admin can SELECT from auth.users (email, created_at, last_sign_in)
 - Admin can UPDATE user status (banned, active)

@@ -2,7 +2,16 @@
 // Last updated: 2026-02-13
 
 import { useState, useEffect } from 'react';
-import { User, Mail, Loader2, Save, ArrowLeft, Trash2, AlertTriangle, ShieldQuestion } from 'lucide-react';
+import {
+  User,
+  Mail,
+  Loader2,
+  Save,
+  ArrowLeft,
+  Trash2,
+  AlertTriangle,
+  ShieldQuestion,
+} from 'lucide-react';
 import TimezonePicker from './TimezonePicker';
 import { DeleteConfirmModal, DeletionScheduledView } from './profile';
 import SecurityQuestionModal from './SecurityQuestionModal';
@@ -43,7 +52,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       setIsLoading(true);
       setError(null);
 
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         setError('Not authenticated');
         return;
@@ -77,7 +88,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     setIsSaving(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('Not authenticated');
       }
@@ -114,7 +127,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
     setError(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Not authenticated');
       }
@@ -123,9 +138,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-          'Content-Type': 'application/json'
-        }
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
       });
 
       const result = await response.json();
@@ -135,14 +150,16 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       }
 
       const purgeDate = new Date(result.purge_at);
-      setDeletionScheduledFor(purgeDate.toLocaleDateString('en-US', {
-        weekday: 'long',
-        month: 'long',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit'
-      }));
+      setDeletionScheduledFor(
+        purgeDate.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+          hour: 'numeric',
+          minute: '2-digit',
+        })
+      );
 
       setShowDeleteConfirm(false);
       setDeleteConfirmText('');
@@ -230,13 +247,14 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
                   disabled
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
                 />
-                <p className="mt-1 text-sm text-gray-500">
-                  Email cannot be changed
-                </p>
+                <p className="mt-1 text-sm text-gray-500">Email cannot be changed</p>
               </div>
 
               <div>
-                <label htmlFor="displayName" className="block text-sm font-medium text-gray-700 mb-2">
+                <label
+                  htmlFor="displayName"
+                  className="block text-sm font-medium text-gray-700 mb-2"
+                >
                   <User className="w-4 h-4 inline mr-2" />
                   Display Name
                 </label>
@@ -252,10 +270,7 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
                 />
               </div>
 
-              <TimezonePicker
-                value={timezone}
-                onChange={setTimezone}
-              />
+              <TimezonePicker value={timezone} onChange={setTimezone} />
 
               <div className="pt-6 border-t border-gray-200">
                 <h3 className="text-base font-semibold text-gray-900 mb-2 flex items-center gap-2">
@@ -302,7 +317,8 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
                 Danger Zone
               </h3>
               <p className="text-sm text-gray-600 mb-4">
-                Permanently delete your account and all associated data. This action cannot be undone.
+                Permanently delete your account and all associated data. This action cannot be
+                undone.
               </p>
               <button
                 onClick={() => setShowDeleteConfirm(true)}

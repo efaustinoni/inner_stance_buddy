@@ -1,0 +1,47 @@
+# .test-exceptions — grandfathered files exempt from test coverage audit
+# One filename per line (no path, no extension).
+# Lines starting with # are comments.
+#
+# All components below were grandfathered in at Husky setup time (2026-04-05).
+# Any NEW component or hook added after this date must include a test file.
+
+# Root components
+AddToHomeScreenButton
+AuthPage
+ForgotPasswordPage
+LegalAcceptanceBanner
+LegalPage
+ProfilePage
+SecurityQuestionModal
+SimpleHeader
+TimezonePicker
+UpdatePasswordPage
+VersionBadge
+WelcomePage
+
+# exercises/
+BulkImportModal
+ExerciseQuestionCard
+QuarterModal
+QuestionModal
+WeekModal
+WeekSelector
+
+# layout/
+DashboardLayout
+MainNavigation
+
+# pages/
+DashboardPage
+PowerPage
+ProgressTrackingPage
+
+# profile/
+DeleteConfirmModal
+DeletionScheduledView
+
+# ui/
+Avatar
+Badge
+Button
+Card

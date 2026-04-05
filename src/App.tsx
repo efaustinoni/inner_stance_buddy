@@ -35,7 +35,9 @@ function App() {
   useEffect(() => {
     const loadUser = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUser(user);
         if (user) {
           loadUserProfile(user.id);
@@ -49,7 +51,9 @@ function App() {
 
     loadUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
         loadUserProfile(session.user.id);
@@ -73,7 +77,9 @@ function App() {
       if (profile?.display_name) {
         setUserName(profile.display_name);
       } else {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         setUserName(user?.email?.split('@')[0] || 'User');
       }
     } catch (error) {
@@ -131,7 +137,7 @@ function App() {
     window.addEventListener('popstate', handlePopState);
 
     const originalPushState = window.history.pushState;
-    window.history.pushState = function(...args) {
+    window.history.pushState = function (...args) {
       originalPushState.apply(window.history, args);
       setRoute(window.location.pathname);
     };
@@ -274,11 +280,7 @@ function App() {
 
   return (
     <>
-      <DashboardLayout
-        userName={userName}
-        onNavigate={navigate}
-        onSignOut={handleSignOut}
-      >
+      <DashboardLayout userName={userName} onNavigate={navigate} onSignOut={handleSignOut}>
         {progressMatch && trackerId ? (
           <ProgressTrackingPage trackerId={trackerId} onNavigate={navigate} />
         ) : weekMatch && weekId ? (

@@ -14,12 +14,7 @@ interface QuestionModalProps {
   };
 }
 
-export function QuestionModal({
-  isOpen,
-  onClose,
-  onSave,
-  initialData
-}: QuestionModalProps) {
+export function QuestionModal({ isOpen, onClose, onSave, initialData }: QuestionModalProps) {
   const [label, setLabel] = useState(initialData?.question_label || '');
   const [text, setText] = useState(initialData?.question_text || '');
   const [isSaving, setIsSaving] = useState(false);

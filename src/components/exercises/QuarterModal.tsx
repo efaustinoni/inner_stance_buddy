@@ -13,13 +13,7 @@ interface QuarterModalProps {
   quarters: ExerciseQuarter[];
 }
 
-export function QuarterModal({
-  isOpen,
-  onClose,
-  onSave,
-  onDelete,
-  quarters,
-}: QuarterModalProps) {
+export function QuarterModal({ isOpen, onClose, onSave, onDelete, quarters }: QuarterModalProps) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingLabel, setEditingLabel] = useState('');
   const [newLabel, setNewLabel] = useState('');
@@ -35,17 +29,17 @@ export function QuarterModal({
     }
   }, [isOpen]);
 
-  const existingLabels = quarters.map(q => q.label);
+  const existingLabels = quarters.map((q) => q.label);
 
   const isDuplicateEdit =
     editingLabel.trim().length > 0 &&
     existingLabels
-      .filter(l => l !== quarters.find(q => q.id === editingId)?.label)
-      .some(l => l.toLowerCase() === editingLabel.trim().toLowerCase());
+      .filter((l) => l !== quarters.find((q) => q.id === editingId)?.label)
+      .some((l) => l.toLowerCase() === editingLabel.trim().toLowerCase());
 
   const isDuplicateNew =
     newLabel.trim().length > 0 &&
-    existingLabels.some(l => l.toLowerCase() === newLabel.trim().toLowerCase());
+    existingLabels.some((l) => l.toLowerCase() === newLabel.trim().toLowerCase());
 
   const handleStartEdit = (q: ExerciseQuarter) => {
     setEditingId(q.id);
@@ -92,9 +86,11 @@ export function QuarterModal({
 
         <div className="p-4 space-y-2 max-h-80 overflow-y-auto">
           {quarters.length === 0 && (
-            <p className="text-sm text-content-muted text-center py-4">No quarters yet. Add one below.</p>
+            <p className="text-sm text-content-muted text-center py-4">
+              No quarters yet. Add one below.
+            </p>
           )}
-          {quarters.map(q => (
+          {quarters.map((q) => (
             <div key={q.id} className="flex items-center gap-2 p-2 bg-navy-900 rounded-lg">
               {editingId === q.id ? (
                 <>
@@ -102,12 +98,19 @@ export function QuarterModal({
                     type="text"
                     value={editingLabel}
                     onChange={(e) => setEditingLabel(e.target.value)}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveEdit(q.id); if (e.key === 'Escape') setEditingId(null); }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveEdit(q.id);
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
                     className="flex-1 px-2 py-1 bg-navy-800 border border-accent-blue rounded text-content-inverse text-sm focus:outline-none"
                     autoFocus
                   />
                   {isDuplicateEdit && (
-                    <AlertCircle size={14} className="text-status-error shrink-0" title="Label already exists" />
+                    <AlertCircle
+                      size={14}
+                      className="text-status-error shrink-0"
+                      aria-label="Label already exists"
+                    />
                   )}
                   <button
                     onClick={() => handleSaveEdit(q.id)}

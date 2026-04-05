@@ -62,15 +62,15 @@ export async function fetchLegalManifest(): Promise<LegalManifest | null> {
     }
 
     const docs = data as LegalDocumentRow[];
-    const termsDoc = docs.find(d => d.document_type === 'terms');
-    const privacyDoc = docs.find(d => d.document_type === 'privacy');
+    const termsDoc = docs.find((d) => d.document_type === 'terms');
+    const privacyDoc = docs.find((d) => d.document_type === 'privacy');
 
     if (!termsDoc || !privacyDoc) {
       console.error('Missing terms or privacy document');
       return null;
     }
 
-    const requiresAcceptance = docs.some(d => d.requires_acceptance);
+    const requiresAcceptance = docs.some((d) => d.requires_acceptance);
 
     return {
       terms: {
@@ -116,16 +116,14 @@ export async function recordUserAgreement(
   userId: string,
   manifest: LegalManifest
 ): Promise<boolean> {
-  const { error } = await supabase
-    .from('user_terms_agreements')
-    .insert({
-      user_id: userId,
-      terms_version: manifest.terms.lastUpdated,
-      privacy_version: manifest.privacy.lastUpdated,
-      terms_version_string: manifest.terms.version,
-      privacy_version_string: manifest.privacy.version,
-      user_agent: navigator.userAgent,
-    });
+  const { error } = await supabase.from('user_terms_agreements').insert({
+    user_id: userId,
+    terms_version: manifest.terms.lastUpdated,
+    privacy_version: manifest.privacy.lastUpdated,
+    terms_version_string: manifest.terms.version,
+    privacy_version_string: manifest.privacy.version,
+    user_agent: navigator.userAgent,
+  });
 
   if (error) {
     console.error('Error recording agreement:', error);
