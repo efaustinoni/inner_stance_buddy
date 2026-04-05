@@ -5,3 +5,4 @@ public
 supabase/migrations
 src/data
 package-lock.json
+coverage

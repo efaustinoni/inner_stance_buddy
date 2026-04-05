@@ -18,7 +18,10 @@ describe('ProfilePage', () => {
   });
 
   it('shows unauthenticated message when no user', async () => {
-    vi.mocked(supabase.auth.getUser).mockResolvedValue({ data: { user: null }, error: null });
+    vi.mocked(supabase.auth.getUser).mockResolvedValue({
+      data: { user: null },
+      error: null,
+    } as never);
     render(<ProfilePage onBack={onBack} />);
     // Component sets error to 'Not authenticated' when user is null
     await waitFor(() => expect(screen.getByText(/Not authenticated/i)).toBeInTheDocument());
