@@ -11,6 +11,12 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./vitest.setup.ts'],
+    include: ['src/**/*.{test,spec}.{ts,tsx}'],
+    env: {
+      VITE_SUPABASE_URL: 'https://test.supabase.co',
+      VITE_SUPABASE_ANON_KEY: 'test-anon-key',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
@@ -26,7 +32,8 @@ export default defineConfig({
         '**/*.config.*',
         '**/*.d.ts',
         'src/main.tsx',
-        'src/lib/timezone/data/**',
+        'src/App.tsx',
+        'src/lib/**',
       ],
     },
   },
