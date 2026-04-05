@@ -1,6 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { fetchDashboardData, fetchUserQuarters } from '../../lib/exerciseService';
+import { fetchDashboardData } from '../../lib/exerciseService';
 import { DashboardPage } from './DashboardPage';
 
 vi.mock('../../lib/exerciseService');

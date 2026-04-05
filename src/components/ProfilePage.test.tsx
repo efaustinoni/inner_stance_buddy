@@ -56,18 +56,16 @@ describe('ProfilePage', () => {
     vi.mocked(supabase.from).mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi
-        .fn()
-        .mockResolvedValue({
-          data: {
-            id: 'u1',
-            display_name: 'Alice',
-            timezone: 'UTC',
-            security_question: '',
-            deleted_at: null,
-          },
-          error: null,
-        }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: 'u1',
+          display_name: 'Alice',
+          timezone: 'UTC',
+          security_question: '',
+          deleted_at: null,
+        },
+        error: null,
+      }),
     } as never);
 
     render(<ProfilePage onBack={onBack} />);

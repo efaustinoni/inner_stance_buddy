@@ -1,10 +1,6 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import {
-  fetchTrackerWithCheckIns,
-  toggleCheckIn,
-  deleteProgressTracker,
-} from '../../lib/exerciseService';
+import { fetchTrackerWithCheckIns } from '../../lib/exerciseService';
 import { ProgressTrackingPage } from './ProgressTrackingPage';
 
 vi.mock('../../lib/exerciseService');
