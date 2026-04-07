@@ -1,9 +1,9 @@
 // Created: 2026-02-13
-// Last updated: 2026-02-13
+// Last updated: 2026-04-07 (salted security answer hashing on update)
 
 import { useState } from 'react';
 import { X, ShieldQuestion, KeyRound, Loader2, Eye, EyeOff, AlertCircle, Lock } from 'lucide-react';
-import { hashSecurityAnswer } from '../lib/crypto';
+import { hashSecurityAnswer, generateSalt } from '../lib/crypto';
 import { supabase } from '../lib/supabase';
 
 interface SecurityQuestionModalProps {
@@ -106,13 +106,15 @@ export default function SecurityQuestionModal({
         return;
       }
 
-      // Hash new answer and update
-      const newAnswerHash = await hashSecurityAnswer(answerToSave);
+      // Generate fresh salt and hash new answer
+      const newSalt = generateSalt();
+      const newAnswerHash = await hashSecurityAnswer(answerToSave, newSalt);
       const { error: updateError } = await supabase
         .from('user_profiles')
         .update({
           security_question: questionToSave,
           security_answer_hash: newAnswerHash,
+          security_answer_salt: newSalt,
           updated_at: new Date().toISOString(),
         })
         .eq('id', user.id);

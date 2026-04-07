@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2026-04-07: SHA-256 salted security answers
+  - New `generateSalt()` in `src/lib/crypto.ts` — 32 random bytes via `crypto.getRandomValues`, hex-encoded
+  - `hashSecurityAnswer(answer, salt?)` now accepts an optional salt prepended before hashing
+  - New users (signup) and users who update their security Q now get a unique per-user salt
+  - Salt stored in new `user_profiles.security_answer_salt` column (DB migration)
+  - `password-reset` edge function: fetches salt alongside hash; uses salted path for new users, unsalted fallback for legacy users (NULL salt)
+  - Existing users are fully backward-compatible — no action required
+  - Requires: DB migration commit pulled in bolt.new before code commit
+
 - 2026-04-07: Performance optimizations, security hardening, and docs cleanup (Phase 3 architecture improvements)
   - **Performance** — `fetchWeekWithQuestions`: week row and questions list now fetched in parallel with `Promise.all` (3 serial round-trips → 2)
   - **Performance** — `copyWeekToQuarter`: answer inserts changed from sequential loop to single batch insert

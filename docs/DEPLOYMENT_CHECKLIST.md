@@ -71,6 +71,18 @@ If the service worker cache name is not updated, users' browsers will keep servi
 
 ---
 
+## SHA-256 salt deployment order
+
+> **IMPORTANT**: The salt feature requires two separate pulls in bolt.new.
+
+1. Pull commit `feat(db): add security_answer_salt column...` — applies both migrations.
+2. Verify `security_answer_salt` column exists in `user_profiles` (Supabase Table Editor).
+3. Only then pull commit `feat: add SHA-256 salted security answers` — deploys edge function + frontend.
+
+If step 3 is pulled before step 2 completes, the `password-reset` edge function will fail to read the new column and return an error for any password reset attempt.
+
+---
+
 ## Lessons learned
 
 | Date       | Lesson                                                                                                                                                                                                      |

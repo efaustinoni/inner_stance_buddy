@@ -1,5 +1,5 @@
 // Created: 2025-12-21
-// Last updated: 2026-02-13
+// Last updated: 2026-04-07 (salted security answer hashing on signup)
 
 import { useState, useEffect, useMemo, useRef } from 'react';
 import {
@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { appConfig } from '../lib/appConfig';
-import { hashSecurityAnswer } from '../lib/crypto';
+import { hashSecurityAnswer, generateSalt } from '../lib/crypto';
 import { detectUserTimezone } from '../lib/timezone';
 import { fetchLegalManifest, setLocalAcceptance, type LegalManifest } from '../lib/legalService';
 import AddToHomeScreenButton from './AddToHomeScreenButton';
@@ -165,7 +165,8 @@ export default function AuthPage() {
           return;
         }
 
-        const hashedAnswer = await hashSecurityAnswer(securityAnswer);
+        const salt = generateSalt();
+        const hashedAnswer = await hashSecurityAnswer(securityAnswer, salt);
 
         const redirectUrl = `${window.location.origin}/`;
 
@@ -179,6 +180,7 @@ export default function AuthPage() {
               timezone: timezone,
               security_question: securityQuestion,
               security_answer_hash: hashedAnswer,
+              security_answer_salt: salt,
               terms_version: legalManifest?.terms.lastUpdated || null,
               privacy_version: legalManifest?.privacy.lastUpdated || null,
               terms_version_string: legalManifest?.terms.version || null,

@@ -1,5 +1,5 @@
 // Created: 2026-02-06
-// Last updated: 2026-04-07 (Phase 3: restrict CORS to SITE_URL)
+// Last updated: 2026-04-07 (Phase 3: restrict CORS; salted answer verification)
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
@@ -14,10 +14,18 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };
 
-async function hashAnswer(answer: string): Promise<string> {
+/**
+ * Hashes a security answer with SHA-256.
+ * When salt is provided (users created/updated after salting was introduced),
+ * it is prepended: SHA-256(salt + normalized).
+ * When salt is null/undefined (legacy users), the unsalted hash is returned
+ * for backward-compatible verification.
+ */
+async function hashAnswer(answer: string, salt?: string | null): Promise<string> {
   const normalized = answer.toLowerCase().trim();
+  const input = salt ? salt + normalized : normalized;
   const encoder = new TextEncoder();
-  const data = encoder.encode(normalized);
+  const data = encoder.encode(input);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
@@ -73,7 +81,7 @@ Deno.serve(async (req: Request) => {
 
       const { data: profile } = await serviceClient
         .from('user_profiles')
-        .select('security_answer_hash')
+        .select('security_answer_hash, security_answer_salt')
         .eq('email', normalizedEmail)
         .is('deleted_at', null)
         .maybeSingle();
@@ -83,7 +91,8 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ error: 'Verification failed' }, 400);
       }
 
-      const hashedAnswer = await hashAnswer(answer);
+      // Use stored salt if present (new users); fall back to unsalted for legacy users
+      const hashedAnswer = await hashAnswer(answer, profile.security_answer_salt);
 
       if (hashedAnswer !== profile.security_answer_hash) {
         await new Promise((r) => setTimeout(r, 1000));
