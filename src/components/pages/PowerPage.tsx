@@ -1,7 +1,8 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-03 07:43 UTC (collapsible week list with quarter filter)
+// Last Updated: 2026-04-07 (user-facing error toasts)
 
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from '../../lib/toast';
 import {
   Plus,
   FileText,
@@ -167,7 +168,15 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     questions?: { label: string; text: string; answer?: string }[]
   ) => {
     if (editingWeek) {
-      await updateWeek(editingWeek.id, { week_number: weekNumber, topic, quarter_id: quarterId });
+      const ok = await updateWeek(editingWeek.id, {
+        week_number: weekNumber,
+        topic,
+        quarter_id: quarterId,
+      });
+      if (!ok) {
+        toast.error('Failed to update week. Please try again.');
+        return;
+      }
       setWeekDataMap((prev) => {
         const m = new Map(prev);
         m.delete(editingWeek.id);
@@ -175,13 +184,16 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
       });
     } else {
       const newWeek = await createWeek(weekNumber, topic, quarterId);
-      if (newWeek) {
-        if (questions && questions.length > 0) {
-          await bulkImportQuestions(newWeek.id, questions);
-        }
-        setExpandedWeekIds((prev) => new Set([...prev, newWeek.id]));
-        await loadWeekData(newWeek.id);
+      if (!newWeek) {
+        toast.error('Failed to create week. Please try again.');
+        return;
       }
+      if (questions && questions.length > 0) {
+        const imported = await bulkImportQuestions(newWeek.id, questions);
+        if (!imported) toast.error('Week created but some questions could not be imported.');
+      }
+      setExpandedWeekIds((prev) => new Set([...prev, newWeek.id]));
+      await loadWeekData(newWeek.id);
     }
     await loadWeeks();
   };
@@ -191,27 +203,47 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     includeAnswers: boolean
   ) => {
     if (!editingWeek) return;
-    await copyWeekToQuarter(editingWeek.id, targetQuarterId, includeAnswers);
+    const result = await copyWeekToQuarter(editingWeek.id, targetQuarterId, includeAnswers);
+    if (!result) {
+      toast.error('Failed to copy week. Please try again.');
+      return;
+    }
     await loadWeeks();
   };
 
   const handleSaveQuarter = async (label: string, quarterId?: string) => {
     if (quarterId) {
-      await updateQuarter(quarterId, label);
+      const ok = await updateQuarter(quarterId, label);
+      if (!ok) {
+        toast.error('Failed to update quarter. Please try again.');
+        return;
+      }
     } else {
-      await createQuarter(label);
+      const result = await createQuarter(label);
+      if (!result) {
+        toast.error('Failed to create quarter. Please try again.');
+        return;
+      }
     }
     await loadWeeks();
   };
 
   const handleDeleteQuarter = async (quarterId: string) => {
-    await deleteQuarter(quarterId);
+    const ok = await deleteQuarter(quarterId);
+    if (!ok) {
+      toast.error('Failed to delete quarter. Please try again.');
+      return;
+    }
     await loadWeeks();
   };
 
   const handleDeleteWeek = async () => {
     if (!editingWeek) return;
-    await deleteWeek(editingWeek.id);
+    const ok = await deleteWeek(editingWeek.id);
+    if (!ok) {
+      toast.error('Failed to delete week. Please try again.');
+      return;
+    }
     setEditingWeek(null);
     setExpandedWeekIds((prev) => {
       const s = new Set(prev);
@@ -229,13 +261,21 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
   const handleSaveQuestion = async (label: string, text: string) => {
     if (!questionTargetWeekId) return;
     const sortOrder = weekDataMap.get(questionTargetWeekId)?.questions.length || 0;
-    await addQuestion(questionTargetWeekId, label, text, sortOrder);
+    const result = await addQuestion(questionTargetWeekId, label, text, sortOrder);
+    if (!result) {
+      toast.error('Failed to add question. Please try again.');
+      return;
+    }
     await refreshWeekData(questionTargetWeekId);
   };
 
   const handleDeleteQuestion = async (questionId: string, wId: string) => {
     if (!confirm('Remove this question?')) return;
-    await deleteQuestion(questionId);
+    const ok = await deleteQuestion(questionId);
+    if (!ok) {
+      toast.error('Failed to delete question. Please try again.');
+      return;
+    }
     await refreshWeekData(wId);
   };
 
@@ -248,15 +288,18 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
         targetWeekId = existingWeek.id;
       } else {
         const newWeek = await createWeek(data.weekNumber, data.theme || '');
-        if (newWeek) {
-          targetWeekId = newWeek.id;
-          await loadWeeks();
+        if (!newWeek) {
+          toast.error('Failed to create week for import. Please try again.');
+          return;
         }
+        targetWeekId = newWeek.id;
+        await loadWeeks();
       }
     }
 
     if (!targetWeekId) return;
-    await bulkImportQuestions(targetWeekId, data.questions);
+    const ok = await bulkImportQuestions(targetWeekId, data.questions);
+    if (!ok) toast.error('Some questions could not be imported. Please check and try again.');
     setExpandedWeekIds((prev) => new Set([...prev, targetWeekId!]));
     await refreshWeekData(targetWeekId);
   };
@@ -266,10 +309,12 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
 
   const handleStartTracking = async (questionId: string) => {
     const tracker = await createProgressTracker(questionId);
-    if (tracker) {
-      setTrackersMap((prev) => ({ ...prev, [questionId]: tracker }));
-      onNavigate(`/progress/${tracker.id}`);
+    if (!tracker) {
+      toast.error('Failed to start progress tracker. Please try again.');
+      return;
     }
+    setTrackersMap((prev) => ({ ...prev, [questionId]: tracker }));
+    onNavigate(`/progress/${tracker.id}`);
   };
 
   if (isLoading) {

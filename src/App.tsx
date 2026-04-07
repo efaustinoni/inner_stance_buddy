@@ -1,7 +1,8 @@
 // Created: 2025-12-21
-// Last updated: 2026-02-13 18:00
+// Last updated: 2026-04-07 (error toast on legal acceptance failure)
 
 import { useEffect, useState } from 'react';
+import { toast } from './lib/toast';
 import { supabase } from './lib/supabase';
 import { detectUserTimezone } from './lib/timezone';
 import AuthPage from './components/AuthPage';
@@ -155,6 +156,8 @@ function App() {
       const success = await recordUserAgreement(user.id, legalManifest);
       if (success) {
         setAcceptanceStatus(null);
+      } else {
+        toast.error('Failed to record your acceptance. Please try again.');
       }
     } else {
       setLocalAcceptance(legalManifest);

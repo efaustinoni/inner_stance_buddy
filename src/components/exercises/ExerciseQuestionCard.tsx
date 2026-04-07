@@ -1,7 +1,8 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-14 00:15
+// Last Updated: 2026-04-07 (error toast on save failure)
 
 import { useState, useEffect } from 'react';
+import { toast } from '../../lib/toast';
 import { Save, Check, X, Target, ArrowRight } from 'lucide-react';
 import type { QuestionWithAnswer, ProgressTracker } from '../../lib/exerciseService';
 
@@ -47,6 +48,8 @@ export function ExerciseQuestionCard({
       setSaved(true);
       setHasChanges(false);
       setTimeout(() => setSaved(false), 2000);
+    } else {
+      toast.error('Failed to save your answer. Please try again.');
     }
   };
 

@@ -1,7 +1,8 @@
 // Created: 2025-12-22
-// Last updated: 2026-02-13
+// Last updated: 2026-04-07 (error toasts on profile update/delete failure)
 
 import { useState, useEffect } from 'react';
+import { toast } from '../lib/toast';
 import {
   User,
   Mail,
@@ -112,7 +113,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       await loadProfile();
     } catch (err) {
       console.error('Error updating profile:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      const msg = err instanceof Error ? err.message : 'Failed to update profile';
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsSaving(false);
     }
@@ -165,7 +168,9 @@ export default function ProfilePage({ onBack }: ProfilePageProps) {
       setDeleteConfirmText('');
     } catch (err) {
       console.error('Error deleting account:', err);
-      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      const msg = err instanceof Error ? err.message : 'Failed to delete account';
+      setError(msg);
+      toast.error(msg);
       setShowDeleteConfirm(false);
     } finally {
       setIsDeleting(false);

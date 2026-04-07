@@ -1,7 +1,8 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-14 01:10
+// Last Updated: 2026-04-07 (error toasts on save/delete failures)
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { toast } from '../../lib/toast';
 import {
   ArrowLeft,
   Trash2,
@@ -145,6 +146,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     const success = await toggleCheckIn(trackerId, dateStr, newValue);
     if (!success) {
       setCheckInsMap((prev) => ({ ...prev, [dateStr]: !newValue }));
+      toast.error('Failed to save check-in. Please try again.');
     }
     setSavingDate(null);
   };
@@ -159,6 +161,7 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
       setNotesMap((prev) => ({ ...prev, [dateStr]: notes }));
     } else {
       setEditingNotes((prev) => ({ ...prev, [dateStr]: notesMap[dateStr] || '' }));
+      toast.error('Failed to save notes. Please try again.');
     }
     setSavingNotes(null);
   };
@@ -172,6 +175,8 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     const success = await deleteProgressTracker(trackerId);
     if (success) {
       onNavigate('/');
+    } else {
+      toast.error('Failed to delete tracker. Please try again.');
     }
     setDeleting(false);
     setShowDeleteConfirm(false);

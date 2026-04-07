@@ -1,7 +1,8 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 20:43 UTC (reset collapsed weeks when quarter filter changes)
+// Last Updated: 2026-04-07 (user-facing error toasts and error state)
 
 import { useState, useEffect, useMemo } from 'react';
+import { toast } from '../../lib/toast';
 import {
   Search,
   Filter,
@@ -35,6 +36,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const [quarters, setQuarters] = useState<ExerciseQuarter[]>([]);
   const [questions, setQuestions] = useState<DashboardQuestion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [selectedWeek, setSelectedWeek] = useState<string | null>(null);
   const [selectedQuarter, setSelectedQuarter] = useState<string | null>(null);
   const [filterMode, setFilterMode] = useState<FilterMode>('all');
@@ -54,11 +56,18 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
 
   const loadData = async () => {
     setLoading(true);
-    const [data, quartersData] = await Promise.all([fetchDashboardData(), fetchUserQuarters()]);
-    setWeeks(data.weeks);
-    setQuestions(data.questions);
-    setQuarters(quartersData);
-    setLoading(false);
+    setLoadError(false);
+    try {
+      const [data, quartersData] = await Promise.all([fetchDashboardData(), fetchUserQuarters()]);
+      setWeeks(data.weeks);
+      setQuestions(data.questions);
+      setQuarters(quartersData);
+    } catch {
+      setLoadError(true);
+      toast.error('Failed to load dashboard data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleQuarterCollapse = (key: string) => {
@@ -80,7 +89,11 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   };
 
   const handleChangeWeekQuarter = async (weekId: string, quarterId: string) => {
-    await moveWeekToQuarter(weekId, quarterId || null);
+    const ok = await moveWeekToQuarter(weekId, quarterId || null);
+    if (!ok) {
+      toast.error('Failed to move week. Please try again.');
+      return;
+    }
     await loadData();
   };
 
@@ -172,6 +185,20 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
     return (
       <div className="flex items-center justify-center min-h-[300px]">
         <div className="w-8 h-8 border-4 border-accent-blue border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[300px] gap-4">
+        <p className="text-status-error font-medium">Failed to load dashboard data.</p>
+        <button
+          onClick={loadData}
+          className="px-4 py-2 bg-accent-blue text-white rounded-lg hover:bg-accent-blue-hover transition-colors text-sm"
+        >
+          Try Again
+        </button>
       </div>
     );
   }

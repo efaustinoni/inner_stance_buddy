@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2026-04-07: User-facing error handling — Phase 1 of architecture improvements (addresses review score C+ 72/100)
+  - New `src/lib/toast.ts` — lightweight event-emitter toast system with no new dependencies
+  - New `src/components/ui/Toast.tsx` — `ToastContainer` component renders stacked toasts (bottom-right, auto-dismiss 4s, max 3) using existing design tokens
+  - New `src/components/ui/ErrorBoundary.tsx` — React class-based error boundary wrapping the entire app; catches unhandled render errors and shows a styled fallback with a "Try Again" reload button
+  - `DashboardPage`: retryable error state shown instead of blank screen when data load fails
+  - Error toasts on all critical write failures: save answer, add/delete/update week, add/delete question, bulk import, copy week, create/update/delete quarter, start tracker, toggle check-in, save notes, delete tracker, accept legal terms, update profile, delete account
+
 - 2026-04-03 07:43 UTC: Manage Weeks redesigned as collapsible week list (v1.4.0)
   - All weeks of the selected quarter shown as a list; each starts collapsed
   - Click a week header to expand and see its questions (loaded on demand)
