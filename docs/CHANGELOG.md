@@ -129,7 +129,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- 2025-12-28: Timezone picker completely redesigned with hierarchical navigation
+- 2026-04-07: Introduce wouter router and reduce App.tsx complexity (Phase 2 architecture improvements)
+  - Added `wouter` ^3.3.5 as a runtime dependency (~2 KB, no sub-dependencies)
+  - New `src/hooks/useAuth.ts` — encapsulates auth state, profile loading, and timezone auto-fill
+  - New `src/hooks/useLegalStatus.ts` — encapsulates legal manifest loading and acceptance logic
+  - `App.tsx` rewritten: 318 → 128 lines; manual `window.history.pushState` patch and `popstate` listener removed; replaced with declarative `<Switch>/<Route>/<Redirect>` from wouter
+  - Unauthenticated redirect now handled by router guard instead of `window.location.href`
+  - Legal acceptance overlay simplified to a single condition (was two near-identical blocks)
+
+- 2025-12-28: Timezone picker completely redesigned
   - Removed "Popular" section
   - Added continent-level grouping (North America and South America as separate continents)
   - Added country-level grouping within each continent with expand/collapse support
