@@ -1,8 +1,8 @@
 // Created: 2025-12-22
-// Last updated: 2026-02-07
+// Last updated: 2026-04-07
 
 export const appConfig = {
-  versionLabel: 'v.1.4.0 Beta',
+  versionLabel: 'v.1.5.0 Beta',
   branding: {
     appName: 'Your App Name',
     appInitials: 'YAN',
