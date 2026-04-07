@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- 2026-04-07: Performance optimizations, security hardening, and docs cleanup (Phase 3 architecture improvements)
+  - **Performance** — `fetchWeekWithQuestions`: week row and questions list now fetched in parallel with `Promise.all` (3 serial round-trips → 2)
+  - **Performance** — `copyWeekToQuarter`: answer inserts changed from sequential loop to single batch insert
+  - **Security** — Edge function CORS restricted to `SITE_URL` env var in all 3 functions (`delete-account`, `extract-questions-from-image`, `password-reset`); falls back to `*` only if unset
+  - **Security** — `Content-Security-Policy` header added to `public/_headers` (script-src self, style-src with unsafe-inline for Tailwind, connect-src for Supabase)
+  - **Docs** — Stale `Poll*` types removed from `src/lib/supabase.ts` (leftover from 2025-12-26 poll removal)
+  - **Docs** — `README.md` rewritten: app description, stack table, deployment workflow, links to all docs
+  - **Docs** — New `docs/CONTRIBUTING.md`: Oz workflow, deployment steps, coding standards, environment variables, directory map
+
 - 2026-04-07: User-facing error handling — Phase 1 of architecture improvements (addresses review score C+ 72/100)
   - New `src/lib/toast.ts` — lightweight event-emitter toast system with no new dependencies
   - New `src/components/ui/Toast.tsx` — `ToastContainer` component renders stacked toasts (bottom-right, auto-dismiss 4s, max 3) using existing design tokens

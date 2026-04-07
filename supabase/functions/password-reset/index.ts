@@ -1,11 +1,15 @@
 // Created: 2026-02-06
-// Last updated: 2026-02-06
+// Last updated: 2026-04-07 (Phase 3: restrict CORS to SITE_URL)
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.57.4';
 
+// SITE_URL is set automatically from Supabase Authentication → URL Configuration.
+// Falls back to '*' only if not configured (e.g. local development).
+const allowedOrigin = Deno.env.get('SITE_URL') || '*';
+
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': allowedOrigin,
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Client-Info, Apikey',
 };

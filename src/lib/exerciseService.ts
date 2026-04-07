@@ -1,5 +1,5 @@
 // Created: 2026-02-13
-// Last Updated: 2026-04-02 20:16 UTC (switch to decrypted views - migration confirmed applied)
+// Last Updated: 2026-04-07 (Phase 3: parallelize fetchWeekWithQuestions, batch copyWeekToQuarter answers)
 
 import { supabase } from './supabase';
 
@@ -129,30 +129,32 @@ export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
 }
 
 export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQuestions | null> {
-  const { data: week, error: weekError } = await supabase
-    .from('exercise_weeks')
-    .select('*')
-    .eq('id', weekId)
-    .maybeSingle();
+  // Fetch week and questions in parallel — both only need weekId
+  const [weekResult, questionsResult] = await Promise.all([
+    supabase.from('exercise_weeks').select('*').eq('id', weekId).maybeSingle(),
+    supabase
+      .from('decrypted_exercise_questions')
+      .select('*')
+      .eq('week_id', weekId)
+      .order('sort_order', { ascending: true }),
+  ]);
 
-  if (weekError || !week) {
-    console.error('Error fetching week:', weekError);
+  if (weekResult.error || !weekResult.data) {
+    console.error('Error fetching week:', weekResult.error);
     return null;
   }
 
-  const { data: questions, error: questionsError } = await supabase
-    .from('decrypted_exercise_questions')
-    .select('*')
-    .eq('week_id', weekId)
-    .order('sort_order', { ascending: true });
+  const week = weekResult.data;
 
-  if (questionsError) {
-    console.error('Error fetching questions:', questionsError);
+  if (questionsResult.error) {
+    console.error('Error fetching questions:', questionsResult.error);
     return { ...week, questions: [] };
   }
 
-  const questionIds = questions?.map((q) => q.id) || [];
+  const questions = questionsResult.data || [];
+  const questionIds = questions.map((q) => q.id);
 
+  // Answers depend on question IDs — must follow the parallel fetch
   let answers: ExerciseAnswer[] = [];
   if (questionIds.length > 0) {
     const { data: answersData } = await supabase
@@ -162,15 +164,12 @@ export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQu
     answers = answersData || [];
   }
 
-  const questionsWithAnswers: QuestionWithAnswer[] = (questions || []).map((q) => ({
+  const questionsWithAnswers: QuestionWithAnswer[] = questions.map((q) => ({
     ...q,
     answer: answers.find((a) => a.question_id === q.id),
   }));
 
-  return {
-    ...week,
-    questions: questionsWithAnswers,
-  };
+  return { ...week, questions: questionsWithAnswers };
 }
 
 export async function createWeek(
@@ -262,6 +261,7 @@ export async function copyWeekToQuarter(
     .order('sort_order', { ascending: true });
 
   if (sourceQuestions && sourceQuestions.length > 0) {
+    // Questions inserted one-by-one to guarantee order and get reliable new IDs
     const newQuestions: { newId: string; oldId: string }[] = [];
     for (const q of sourceQuestions) {
       const { data: newQ, error: qError } = await supabase
@@ -289,15 +289,19 @@ export async function copyWeekToQuarter(
         .in('question_id', oldIds);
 
       if (sourceAnswers && sourceAnswers.length > 0) {
-        for (const a of sourceAnswers) {
-          const mapping = newQuestions.find((q) => q.oldId === a.question_id);
-          if (mapping) {
-            await supabase.from('exercise_answers').insert({
-              question_id: mapping.newId,
-              user_id: user.id,
-              answer_text: a.answer_text,
-            });
-          }
+        // Collect all answer rows then insert in a single batch call
+        const answersToInsert = sourceAnswers
+          .map((a) => {
+            const mapping = newQuestions.find((q) => q.oldId === a.question_id);
+            if (!mapping) return null;
+            return { question_id: mapping.newId, user_id: user.id, answer_text: a.answer_text };
+          })
+          .filter((a): a is { question_id: string; user_id: string; answer_text: string } =>
+            a !== null
+          );
+
+        if (answersToInsert.length > 0) {
+          await supabase.from('exercise_answers').insert(answersToInsert);
         }
       }
     }
