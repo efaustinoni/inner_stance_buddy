@@ -40,7 +40,7 @@ describe('ExerciseQuestionCard', () => {
   const defaultProps = {
     question: mockQuestion,
     tracker: null,
-    onSaveAnswer: vi.fn().mockResolvedValue(true),
+    onSaveAnswer: vi.fn().mockResolvedValue({ ok: true, data: undefined }),
     onDeleteQuestion: vi.fn(),
     onStartTracking: vi.fn().mockResolvedValue(undefined),
     onViewProgress: vi.fn(),

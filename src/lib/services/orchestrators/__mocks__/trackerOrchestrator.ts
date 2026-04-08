@@ -1,3 +1,5 @@
 import { vi } from 'vitest';
 
-export const fetchTrackerWithCheckIns = vi.fn().mockResolvedValue(null);
+export const fetchTrackerWithCheckIns = vi
+  .fn()
+  .mockResolvedValue({ ok: false, error: { code: 'db', message: '' } });

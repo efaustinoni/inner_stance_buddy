@@ -3,6 +3,9 @@
 // Domain: Answers
 
 import { supabase } from '../supabase';
+import { ok, err, type Result } from './types';
+
+export type { Result };
 
 export interface ExerciseAnswer {
   id: string;
@@ -13,11 +16,11 @@ export interface ExerciseAnswer {
   updated_at: string;
 }
 
-export async function saveAnswer(questionId: string, answerText: string): Promise<boolean> {
+export async function saveAnswer(questionId: string, answerText: string): Promise<Result> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return false;
+  if (!user) return err('auth', 'Not authenticated');
 
   const { error } = await supabase.from('exercise_answers').upsert(
     {
@@ -31,8 +34,8 @@ export async function saveAnswer(questionId: string, answerText: string): Promis
 
   if (error) {
     console.error('Error saving answer:', error);
-    return false;
+    return err('db', error.message);
   }
 
-  return true;
+  return ok(undefined);
 }

@@ -27,7 +27,7 @@ const mockUser = { id: 'u1', email: 'user@test.com' };
 describe('saveAnswer', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns false when no user is authenticated', async () => {
+  it('returns auth error when no user is authenticated', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
       error: null,
@@ -35,10 +35,11 @@ describe('saveAnswer', () => {
 
     const result = await saveAnswer('q1', 'My answer');
 
-    expect(result).toBe(false);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('auth');
   });
 
-  it('saves an answer via upsert on success', async () => {
+  it('returns ok on successful upsert', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: mockUser as never },
       error: null,
@@ -47,11 +48,11 @@ describe('saveAnswer', () => {
 
     const result = await saveAnswer('q1', 'My answer');
 
-    expect(result).toBe(true);
+    expect(result.ok).toBe(true);
     expect(supabase.from).toHaveBeenCalledWith('exercise_answers');
   });
 
-  it('returns false when upsert fails', async () => {
+  it('returns db error when upsert fails', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: mockUser as never },
       error: null,
@@ -60,6 +61,7 @@ describe('saveAnswer', () => {
 
     const result = await saveAnswer('q1', 'My answer');
 
-    expect(result).toBe(false);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('db');
   });
 });

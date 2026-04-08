@@ -25,6 +25,7 @@ import {
   type TrackerWithCheckIns,
   type ProgressCheckIn,
 } from '../../lib/services/trackerService';
+import { withRetry } from '../../lib/withRetry';
 
 interface ProgressTrackingPageProps {
   trackerId: string;
@@ -83,12 +84,12 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
   const loadTracker = async () => {
     setLoading(true);
     try {
-      const data = await fetchTrackerWithCheckIns(trackerId);
-      setTracker(data);
-      if (data) {
+      const result = await fetchTrackerWithCheckIns(trackerId);
+      if (result.ok) {
+        setTracker(result.data);
         const doneMap: Record<string, boolean> = {};
         const notes: Record<string, string> = {};
-        data.check_ins.forEach((ci: ProgressCheckIn) => {
+        result.data.check_ins.forEach((ci: ProgressCheckIn) => {
           doneMap[ci.check_in_date] = ci.is_done;
           notes[ci.check_in_date] = ci.notes || '';
         });
@@ -96,7 +97,12 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
         setNotesMap(notes);
         setEditingNotes(notes);
       } else {
-        toast.error('Could not load tracker data. Please try again.');
+        setTracker(null);
+        if (result.error.code === 'auth') {
+          toast.error('Your session has expired. Please sign in again.');
+        } else {
+          toast.error('Could not load tracker data. Please try again.');
+        }
       }
     } catch {
       toast.error('Could not load tracker data. Please try again.');
@@ -150,7 +156,10 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     const newValue = !checkInsMap[dateStr];
     setSavingDate(dateStr);
     setCheckInsMap((prev) => ({ ...prev, [dateStr]: newValue }));
-    const success = await toggleCheckIn(trackerId, dateStr, newValue);
+    const success = await withRetry(
+      () => toggleCheckIn(trackerId, dateStr, newValue),
+      (r) => !r
+    );
     if (!success) {
       setCheckInsMap((prev) => ({ ...prev, [dateStr]: !newValue }));
       toast.error('Failed to save check-in. Please try again.');
@@ -163,7 +172,10 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
     if (notes === notesMap[dateStr]) return;
 
     setSavingNotes(dateStr);
-    const success = await updateCheckInNotes(trackerId, dateStr, notes);
+    const success = await withRetry(
+      () => updateCheckInNotes(trackerId, dateStr, notes),
+      (r) => !r
+    );
     if (success) {
       setNotesMap((prev) => ({ ...prev, [dateStr]: notes }));
     } else {

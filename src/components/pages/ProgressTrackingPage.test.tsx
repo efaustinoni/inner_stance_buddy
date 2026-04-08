@@ -44,21 +44,24 @@ describe('ProgressTrackingPage', () => {
   });
 
   it('renders Progress Tracking heading when data loads', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(mockTracker as never);
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({ ok: true, data: mockTracker } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     await waitFor(() => expect(screen.getByText('Progress Tracking')).toBeInTheDocument());
   });
 
   it('renders question text', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(mockTracker as never);
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({ ok: true, data: mockTracker } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     await waitFor(() => expect(screen.getByText('What did you learn?')).toBeInTheDocument());
   });
 
   it('renders check-in calendar entries', async () => {
     vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({
-      ...mockTracker,
-      started_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      ok: true,
+      data: {
+        ...mockTracker,
+        started_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      },
     } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     // Calendar should show at least one date entry
@@ -66,27 +69,30 @@ describe('ProgressTrackingPage', () => {
   });
 
   it('shows delete tracker button', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(mockTracker as never);
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({ ok: true, data: mockTracker } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     // The delete button has no visible text — use its title attribute
     await waitFor(() => expect(screen.getByTitle('Delete tracker')).toBeInTheDocument());
   });
 
-  it('shows no tracker message when tracker is null', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(null as never);
+  it('shows no tracker message when tracker is not found', async () => {
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({
+      ok: false,
+      error: { code: 'db', message: 'not found' },
+    } as never);
     render(<ProgressTrackingPage trackerId="invalid" onNavigate={onNavigate} />);
     // Loading ends, no tracker found — component handles gracefully
     await waitFor(() => expect(document.querySelector('.animate-spin')).not.toBeInTheDocument());
   });
 
   it('renders Dashboard breadcrumb link', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(mockTracker as never);
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({ ok: true, data: mockTracker } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     await waitFor(() => expect(screen.getByText('Dashboard')).toBeInTheDocument());
   });
 
   it('calls onNavigate(/) when Dashboard breadcrumb clicked', async () => {
-    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue(mockTracker as never);
+    vi.mocked(fetchTrackerWithCheckIns).mockResolvedValue({ ok: true, data: mockTracker } as never);
     render(<ProgressTrackingPage trackerId="t1" onNavigate={onNavigate} />);
     await waitFor(() => screen.getByText('Dashboard'));
     fireEvent.click(screen.getByText('Dashboard'));

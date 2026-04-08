@@ -47,24 +47,30 @@ export async function copyWeekToQuarter(
     .order('sort_order', { ascending: true });
 
   if (sourceQuestions && sourceQuestions.length > 0) {
-    // Questions inserted one-by-one to guarantee order and get reliable new IDs
-    const newQuestions: { newId: string; oldId: string }[] = [];
-    for (const q of sourceQuestions) {
-      const { data: newQ, error: qError } = await supabase
-        .from('exercise_questions')
-        .insert({
+    // Batch-insert all questions in one round-trip.
+    // sort_order is unique within a week, so it is used as the matching key
+    // to build the old-id → new-id mapping after the insert.
+    const { data: newQs, error: qBatchError } = await supabase
+      .from('exercise_questions')
+      .insert(
+        sourceQuestions.map((q) => ({
           week_id: newWeek.id,
           question_label: q.question_label,
           question_text: q.question_text,
           sort_order: q.sort_order,
-        })
-        .select()
-        .single();
+        }))
+      )
+      .select();
 
-      if (!qError && newQ) {
-        newQuestions.push({ newId: newQ.id, oldId: q.id });
-      }
+    if (qBatchError || !newQs) {
+      console.error('Error batch-inserting questions for copy:', qBatchError);
+      return newWeek;
     }
+
+    const newQuestions = sourceQuestions.map((oldQ) => ({
+      newId: newQs.find((nq) => nq.sort_order === oldQ.sort_order)!.id,
+      oldId: oldQ.id,
+    }));
 
     if (includeAnswers && newQuestions.length > 0) {
       const oldIds = newQuestions.map((q) => q.oldId);

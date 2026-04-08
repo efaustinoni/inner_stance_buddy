@@ -5,6 +5,7 @@ import { supabase } from '../supabase';
 import type { ExerciseQuestion } from './questionService';
 import type { ExerciseWeek } from './weekService';
 import type { ExerciseAnswer } from './answerService';
+import { ok, err, type Result } from './types';
 
 export interface ProgressTracker {
   id: string;
@@ -38,11 +39,11 @@ export interface TrackerWithCheckIns extends ProgressTracker {
   answer?: ExerciseAnswer;
 }
 
-export async function createProgressTracker(questionId: string): Promise<ProgressTracker | null> {
+export async function createProgressTracker(questionId: string): Promise<Result<ProgressTracker>> {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return null;
+  if (!user) return err('auth', 'Not authenticated');
 
   const { data, error } = await supabase
     .from('progress_trackers')
@@ -56,10 +57,10 @@ export async function createProgressTracker(questionId: string): Promise<Progres
 
   if (error) {
     console.error('Error creating progress tracker:', error);
-    return null;
+    return err('db', error.message);
   }
 
-  return data;
+  return ok(data);
 }
 
 export async function getTrackerForQuestion(questionId: string): Promise<ProgressTracker | null> {

@@ -6,11 +6,13 @@ import { toast } from '../../lib/toast';
 import { Save, Check, X, Target, ArrowRight } from 'lucide-react';
 import type { QuestionWithAnswer } from '../../lib/services/weekService';
 import type { ProgressTracker } from '../../lib/services/trackerService';
+import type { Result } from '../../lib/services/answerService';
+import { withRetry, isTransientResult } from '../../lib/withRetry';
 
 interface ExerciseQuestionCardProps {
   question: QuestionWithAnswer;
   tracker?: ProgressTracker | null;
-  onSaveAnswer: (questionId: string, answerText: string) => Promise<boolean>;
+  onSaveAnswer: (questionId: string, answerText: string) => Promise<Result>;
   onDeleteQuestion: (questionId: string) => void;
   onStartTracking: (questionId: string) => Promise<void>;
   onViewProgress: (trackerId: string) => void;
@@ -43,12 +45,14 @@ export function ExerciseQuestionCard({
 
   const handleSave = async () => {
     setIsSaving(true);
-    const success = await onSaveAnswer(question.id, answer);
+    const result = await withRetry(() => onSaveAnswer(question.id, answer), isTransientResult);
     setIsSaving(false);
-    if (success) {
+    if (result.ok) {
       setSaved(true);
       setHasChanges(false);
       setTimeout(() => setSaved(false), 2000);
+    } else if (result.error.code === 'auth') {
+      toast.error('Your session has expired. Please sign in again.');
     } else {
       toast.error('Failed to save your answer. Please try again.');
     }

@@ -109,27 +109,27 @@ export async function bulkImportQuestions(
     }
   }
 
-  // Insert questions one by one to guarantee order and get reliable IDs
-  const insertedQuestions: ExerciseQuestion[] = [];
-  for (let i = 0; i < questions.length; i++) {
-    const q = questions[i];
-    const { data: inserted, error: qError } = await supabase
-      .from('exercise_questions')
-      .insert({
+  // Batch-insert all questions in one round-trip.
+  // sort_order = array index so rows can be reconstructed in original order after the insert.
+  const { data: insertedRaw, error: insertError } = await supabase
+    .from('exercise_questions')
+    .insert(
+      questions.map((q, i) => ({
         week_id: weekId,
         question_label: q.label,
         question_text: q.text,
         sort_order: i,
-      })
-      .select()
-      .single();
+      }))
+    )
+    .select();
 
-    if (qError || !inserted) {
-      console.error(`[BulkImport] Error inserting question ${i + 1}:`, qError);
-      return false;
-    }
-    insertedQuestions.push(inserted);
+  if (insertError || !insertedRaw) {
+    console.error('[BulkImport] Error inserting questions:', insertError);
+    return false;
   }
+
+  // Reconstruct insertion order — sort by sort_order so index == original position
+  const insertedQuestions = [...insertedRaw].sort((a, b) => a.sort_order - b.sort_order);
 
   const answersToInsert = questions
     .map((q, index) => {

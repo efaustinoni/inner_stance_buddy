@@ -60,7 +60,7 @@ const mockTracker = {
 describe('createProgressTracker', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('returns null when no user is authenticated', async () => {
+  it('returns auth error when no user is authenticated', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: null },
       error: null,
@@ -68,7 +68,8 @@ describe('createProgressTracker', () => {
 
     const result = await createProgressTracker('q1');
 
-    expect(result).toBeNull();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('auth');
   });
 
   it('returns the new tracker on success', async () => {
@@ -80,10 +81,11 @@ describe('createProgressTracker', () => {
 
     const result = await createProgressTracker('q1');
 
-    expect(result).toEqual(mockTracker);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.data).toEqual(mockTracker);
   });
 
-  it('returns null when the insert fails', async () => {
+  it('returns db error when the insert fails', async () => {
     vi.mocked(supabase.auth.getUser).mockResolvedValue({
       data: { user: mockUser as never },
       error: null,
@@ -94,7 +96,8 @@ describe('createProgressTracker', () => {
 
     const result = await createProgressTracker('q1');
 
-    expect(result).toBeNull();
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.code).toBe('db');
   });
 });
 

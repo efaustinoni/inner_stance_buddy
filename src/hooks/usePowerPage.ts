@@ -21,7 +21,7 @@ import {
   type ExerciseQuarter,
 } from '../lib/services/quarterService';
 import { addQuestion, deleteQuestion, bulkImportQuestions } from '../lib/services/questionService';
-import { saveAnswer } from '../lib/services/answerService';
+import { saveAnswer, type Result } from '../lib/services/answerService';
 import {
   createProgressTracker,
   getTrackerForQuestion,
@@ -288,17 +288,21 @@ export function usePowerPage(onNavigate: (path: string) => void) {
     await refreshWeekData(targetWeekId);
   };
 
-  const handleSaveAnswer = async (questionId: string, answerText: string): Promise<boolean> =>
+  const handleSaveAnswer = async (questionId: string, answerText: string): Promise<Result> =>
     await saveAnswer(questionId, answerText);
 
   const handleStartTracking = async (questionId: string) => {
-    const tracker = await createProgressTracker(questionId);
-    if (!tracker) {
-      toast.error('Failed to start progress tracker. Please try again.');
+    const result = await createProgressTracker(questionId);
+    if (!result.ok) {
+      if (result.error.code === 'auth') {
+        toast.error('Your session has expired. Please sign in again.');
+      } else {
+        toast.error('Failed to start progress tracker. Please try again.');
+      }
       return;
     }
-    setTrackersMap((prev) => ({ ...prev, [questionId]: tracker }));
-    onNavigate(`/progress/${tracker.id}`);
+    setTrackersMap((prev) => ({ ...prev, [questionId]: result.data }));
+    onNavigate(`/progress/${result.data.id}`);
   };
 
   const hasUnassigned = weeks.some((w) => !w.quarter_id);
