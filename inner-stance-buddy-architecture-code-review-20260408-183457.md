@@ -175,15 +175,17 @@ All four debt items have been addressed.
 
 ---
 
-### 7. Code Efficiency & Performance — B (75/100)
+### 7. Code Efficiency & Performance — A- (88/100)
 
 _What this measures: Whether the code avoids obvious performance anti-patterns and handles resources responsibly._
 
 The codebase shows genuine attention to database performance. `fetchDashboardData()` uses `Promise.all` to parallelize answers and trackers fetches after the sequential week → questions dependency is resolved. `fetchWeekWithQuestions()` parallelizes the week and questions queries. The `copyWeekOrchestrator` does a single batch insert for all questions instead of N individual inserts. `useDashboard` and `usePowerPage` use `useMemo` to avoid re-computing filtered and grouped data on every render. Week data in `usePowerPage` is lazily fetched — only when a week is expanded.
 
-Previously `usePowerPage.loadWeekData` contained an N+1 pattern — `getTrackerForQuestion` was called in a loop, producing one auth call + one DB query per question. This has been resolved by introducing `getTrackersForQuestions(questionIds)` in `trackerService.ts`, which fetches all trackers for a week's questions in a single `.in('question_id', questionIds)` round-trip. Both `loadWeekData` and `refreshWeekData` now use this batch function.
+Both remaining performance concerns have been resolved:
 
-The remaining efficiency concerns are minor for a single-user PWA: there is no client-side cache, so every navigation re-fetches all data. This is acceptable at the current scale but worth revisiting if load times become perceptible.
+**Auth call caching (`src/lib/getCurrentUser.ts`)**: `supabase.auth.getUser()` previously made a network round-trip on every service function call. `getCurrentUser()` caches the validated `User` object at module level on the first call and returns it instantly on subsequent calls. `onAuthStateChange` keeps the cache in sync on sign-in, sign-out, and token refresh. All service functions (`weekService`, `quarterService`, `trackerService`, `answerService`, `dashboardOrchestrator`) now use `getCurrentUser()` instead of `supabase.auth.getUser()` directly.
+
+**Client-side data cache (`src/lib/dataCache.ts`)**: a lightweight module-level TTL cache (30 s) eliminates redundant Supabase fetches on navigation. `fetchUserWeeks`, `fetchUserQuarters`, and `fetchDashboardData` return the cached payload on hit and populate the cache on miss. Write operations (`createWeek`, `deleteWeek`, `updateQuarter`, `saveAnswer`, `createProgressTracker`, etc.) call `dataCache.invalidate()` on the relevant keys immediately so in-session mutations are always reflected. `handleSignOut` calls `dataCache.clear()` before signing out. See `docs/adr/0005-module-level-data-cache.md` for the full rationale and trade-offs.
 
 **Strengths:**
 
@@ -191,12 +193,14 @@ The remaining efficiency concerns are minor for a single-user PWA: there is no c
 - `useMemo` used correctly for derived state in `useDashboard` and `usePowerPage`.
 - Lazy week data loading in `usePowerPage` prevents unnecessary up-front fetching.
 - Batch insert in `copyWeekOrchestrator` reduces round-trips.
-- ✅ Tracker queries now use a single batch fetch via `getTrackersForQuestions`.
+- ✅ Tracker queries use a single batch fetch via `getTrackersForQuestions`.
+- ✅ `getCurrentUser()` — one `getUser()` network call per session; all services benefit.
+- ✅ `dataCache` — navigating back to a page already visited is instant within the 30 s TTL.
 
 **Issues:**
 
-- `getTrackerForQuestion` (single-question variant) still calls `supabase.auth.getUser()` on every invocation — acceptable, but could be cached.
-- No client-side caching or stale-while-revalidate strategy — every navigation re-fetches all data.
+- ✅ `getTrackerForQuestion` and all service functions now use `getCurrentUser()` — auth call cached for the session lifetime.
+- ✅ `fetchUserWeeks`, `fetchUserQuarters`, and `fetchDashboardData` serve cached results on repeat navigation. Write-through invalidation keeps the cache consistent.
 
 ---
 
