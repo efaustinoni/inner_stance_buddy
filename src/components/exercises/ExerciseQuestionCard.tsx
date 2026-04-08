@@ -4,7 +4,8 @@
 import { useState, useEffect } from 'react';
 import { toast } from '../../lib/toast';
 import { Save, Check, X, Target, ArrowRight } from 'lucide-react';
-import type { QuestionWithAnswer, ProgressTracker } from '../../lib/exerciseService';
+import type { QuestionWithAnswer } from '../../lib/services/weekService';
+import type { ProgressTracker } from '../../lib/services/trackerService';
 
 interface ExerciseQuestionCardProps {
   question: QuestionWithAnswer;

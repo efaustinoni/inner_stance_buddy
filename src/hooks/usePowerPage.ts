@@ -6,26 +6,28 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from '../lib/toast';
 import {
   fetchUserWeeks,
-  fetchUserQuarters,
   fetchWeekWithQuestions,
   createWeek,
   updateWeek,
   deleteWeek,
-  addQuestion,
-  deleteQuestion,
-  saveAnswer,
-  bulkImportQuestions,
-  createProgressTracker,
-  getTrackerForQuestion,
+  type ExerciseWeek,
+  type WeekWithQuestions,
+} from '../lib/services/weekService';
+import {
+  fetchUserQuarters,
   createQuarter,
   updateQuarter,
   deleteQuarter,
-  copyWeekToQuarter,
-  type ExerciseWeek,
   type ExerciseQuarter,
-  type WeekWithQuestions,
+} from '../lib/services/quarterService';
+import { addQuestion, deleteQuestion, bulkImportQuestions } from '../lib/services/questionService';
+import { saveAnswer } from '../lib/services/answerService';
+import {
+  createProgressTracker,
+  getTrackerForQuestion,
   type ProgressTracker,
-} from '../lib/exerciseService';
+} from '../lib/services/trackerService';
+import { copyWeekToQuarter } from '../services/orchestrators/copyWeekOrchestrator';
 import type { BulkImportData } from '../components/exercises';
 
 export function usePowerPage(onNavigate: (path: string) => void) {

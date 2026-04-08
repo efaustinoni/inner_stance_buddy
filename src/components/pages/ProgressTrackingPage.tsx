@@ -17,14 +17,14 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
+import { fetchTrackerWithCheckIns } from '../../services/orchestrators/trackerOrchestrator';
 import {
-  fetchTrackerWithCheckIns,
   toggleCheckIn,
   updateCheckInNotes,
   deleteProgressTracker,
   type TrackerWithCheckIns,
   type ProgressCheckIn,
-} from '../../lib/exerciseService';
+} from '../../lib/services/trackerService';
 
 interface ProgressTrackingPageProps {
   trackerId: string;

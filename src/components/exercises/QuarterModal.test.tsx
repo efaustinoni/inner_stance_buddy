@@ -1,7 +1,7 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { QuarterModal } from './QuarterModal';
-import type { ExerciseQuarter } from '../../lib/exerciseService';
+import type { ExerciseQuarter } from '../../lib/services/quarterService';
 
 const quarters: ExerciseQuarter[] = [
   { id: 'q1', user_id: 'u1', label: 'Q1 2026', created_at: '', updated_at: '' },

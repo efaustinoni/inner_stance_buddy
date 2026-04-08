@@ -1,9 +1,10 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { fetchTrackerWithCheckIns } from '../../lib/exerciseService';
+import { fetchTrackerWithCheckIns } from '../../services/orchestrators/trackerOrchestrator';
 import { ProgressTrackingPage } from './ProgressTrackingPage';
 
-vi.mock('../../lib/exerciseService');
+vi.mock('../../services/orchestrators/trackerOrchestrator');
+vi.mock('../../lib/services/trackerService');
 
 const onNavigate = vi.fn();
 

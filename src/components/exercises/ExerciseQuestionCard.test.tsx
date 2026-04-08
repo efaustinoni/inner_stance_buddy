@@ -1,7 +1,8 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { ExerciseQuestionCard } from './ExerciseQuestionCard';
-import type { QuestionWithAnswer, ProgressTracker } from '../../lib/exerciseService';
+import type { QuestionWithAnswer } from '../../lib/services/weekService';
+import type { ProgressTracker } from '../../lib/services/trackerService';
 
 const mockQuestion: QuestionWithAnswer = {
   id: 'q1',

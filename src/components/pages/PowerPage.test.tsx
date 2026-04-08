@@ -1,9 +1,15 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { fetchUserWeeks, fetchUserQuarters } from '../../lib/exerciseService';
+import { fetchUserWeeks } from '../../lib/services/weekService';
+import { fetchUserQuarters } from '../../lib/services/quarterService';
 import { PowerPage } from './PowerPage';
 
-vi.mock('../../lib/exerciseService');
+vi.mock('../../lib/services/weekService');
+vi.mock('../../lib/services/quarterService');
+vi.mock('../../lib/services/questionService');
+vi.mock('../../lib/services/answerService');
+vi.mock('../../lib/services/trackerService');
+vi.mock('../../services/orchestrators/copyWeekOrchestrator');
 
 const onNavigate = vi.fn();
 

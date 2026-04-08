@@ -14,7 +14,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { type DashboardQuestion } from '../../lib/exerciseService';
+import { type DashboardQuestion } from '../../services/orchestrators/dashboardOrchestrator';
 import { useDashboard } from '../../hooks/useDashboard';
 
 interface DashboardPageProps {

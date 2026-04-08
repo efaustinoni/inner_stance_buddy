@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, AlertCircle, Pencil, Trash2, Check, Plus } from 'lucide-react';
-import type { ExerciseQuarter } from '../../lib/exerciseService';
+import type { ExerciseQuarter } from '../../lib/services/quarterService';
 
 interface QuarterModalProps {
   isOpen: boolean;

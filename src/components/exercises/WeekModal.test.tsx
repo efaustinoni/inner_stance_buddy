@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { WeekModal } from './WeekModal';
-import type { ExerciseQuarter } from '../../lib/exerciseService';
+import type { ExerciseQuarter } from '../../lib/services/quarterService';
 
-vi.mock('../../lib/exerciseService');
+vi.mock('../../lib/services/questionService');
 
 const quarters: ExerciseQuarter[] = [
   { id: 'q1', user_id: 'u1', label: 'Q1 2026', created_at: '', updated_at: '' },

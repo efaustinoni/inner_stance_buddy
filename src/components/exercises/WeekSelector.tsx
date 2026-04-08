@@ -1,7 +1,7 @@
 // Created: 2026-02-13
 // Last Updated: 2026-04-03 07:43 UTC (simplified to controlled quarter badge filter only)
 
-import type { ExerciseQuarter } from '../../lib/exerciseService';
+import type { ExerciseQuarter } from '../../lib/services/quarterService';
 
 interface WeekSelectorProps {
   quarters: ExerciseQuarter[];

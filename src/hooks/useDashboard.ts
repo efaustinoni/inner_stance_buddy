@@ -6,12 +6,10 @@ import { useState, useEffect, useMemo } from 'react';
 import { toast } from '../lib/toast';
 import {
   fetchDashboardData,
-  fetchUserQuarters,
-  moveWeekToQuarter,
-  type ExerciseWeek,
-  type ExerciseQuarter,
   type DashboardQuestion,
-} from '../lib/exerciseService';
+} from '../services/orchestrators/dashboardOrchestrator';
+import { fetchUserQuarters, type ExerciseQuarter } from '../lib/services/quarterService';
+import { moveWeekToQuarter, type ExerciseWeek } from '../lib/services/weekService';
 
 export type FilterMode = 'all' | 'tracked' | 'untracked';
 

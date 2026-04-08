@@ -16,8 +16,8 @@ import {
   ScanSearch,
 } from 'lucide-react';
 import { parseExerciseText } from './BulkImportModal';
-import type { ExerciseQuarter } from '../../lib/exerciseService';
-import { extractQuestionsFromImage } from '../../lib/exerciseService';
+import type { ExerciseQuarter } from '../../lib/services/quarterService';
+import { extractQuestionsFromImage } from '../../lib/services/questionService';
 
 export interface ParsedQuestion {
   label: string;

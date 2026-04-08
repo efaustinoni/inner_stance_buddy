@@ -15,7 +15,7 @@ import {
   Loader2,
   ScanSearch,
 } from 'lucide-react';
-import { extractQuestionsFromImage } from '../../lib/exerciseService';
+import { extractQuestionsFromImage } from '../../lib/services/questionService';
 
 export interface BulkImportData {
   weekNumber?: number;
