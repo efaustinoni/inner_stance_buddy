@@ -2,8 +2,8 @@
 // Orchestrator: Tracker Detail
 // Combines: tracker + question + week + check-ins + answer into one tracker view payload.
 
-import { supabase } from '../../lib/supabase';
-import type { TrackerWithCheckIns } from '../../lib/services/trackerService';
+import { supabase } from '../../supabase';
+import type { TrackerWithCheckIns } from '../trackerService';
 
 export async function fetchTrackerWithCheckIns(
   trackerId: string

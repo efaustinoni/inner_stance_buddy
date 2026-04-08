@@ -3,11 +3,11 @@
 
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fetchDashboardData } from '../services/orchestrators/dashboardOrchestrator';
+import { fetchDashboardData } from '../lib/services/orchestrators/dashboardOrchestrator';
 import { fetchUserQuarters } from '../lib/services/quarterService';
 import { useDashboard } from './useDashboard';
 
-vi.mock('../services/orchestrators/dashboardOrchestrator');
+vi.mock('../lib/services/orchestrators/dashboardOrchestrator');
 vi.mock('../lib/services/quarterService');
 vi.mock('../lib/services/weekService');
 vi.mock('../lib/toast');

@@ -7,7 +7,7 @@ import { toast } from '../lib/toast';
 import {
   fetchDashboardData,
   type DashboardQuestion,
-} from '../services/orchestrators/dashboardOrchestrator';
+} from '../lib/services/orchestrators/dashboardOrchestrator';
 import { fetchUserQuarters, type ExerciseQuarter } from '../lib/services/quarterService';
 import { moveWeekToQuarter, type ExerciseWeek } from '../lib/services/weekService';
 

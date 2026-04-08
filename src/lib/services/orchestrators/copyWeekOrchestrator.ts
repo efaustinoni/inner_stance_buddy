@@ -2,8 +2,8 @@
 // Orchestrator: Copy Week
 // Combines: weeks + questions + answers to deep-copy a week into a target quarter.
 
-import { supabase } from '../../lib/supabase';
-import type { ExerciseWeek } from '../../lib/services/weekService';
+import { supabase } from '../../supabase';
+import type { ExerciseWeek } from '../weekService';
 
 export async function copyWeekToQuarter(
   weekId: string,

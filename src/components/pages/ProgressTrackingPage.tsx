@@ -17,7 +17,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { Card } from '../ui/Card';
-import { fetchTrackerWithCheckIns } from '../../services/orchestrators/trackerOrchestrator';
+import { fetchTrackerWithCheckIns } from '../../lib/services/orchestrators/trackerOrchestrator';
 import {
   toggleCheckIn,
   updateCheckInNotes,

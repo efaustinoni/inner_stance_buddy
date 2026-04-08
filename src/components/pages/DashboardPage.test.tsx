@@ -1,9 +1,9 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import { fetchDashboardData } from '../../services/orchestrators/dashboardOrchestrator';
+import { fetchDashboardData } from '../../lib/services/orchestrators/dashboardOrchestrator';
 import { DashboardPage } from './DashboardPage';
 
-vi.mock('../../services/orchestrators/dashboardOrchestrator');
+vi.mock('../../lib/services/orchestrators/dashboardOrchestrator');
 vi.mock('../../lib/services/quarterService');
 
 const onNavigate = vi.fn();

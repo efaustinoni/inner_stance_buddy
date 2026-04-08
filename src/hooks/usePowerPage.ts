@@ -27,7 +27,7 @@ import {
   getTrackerForQuestion,
   type ProgressTracker,
 } from '../lib/services/trackerService';
-import { copyWeekToQuarter } from '../services/orchestrators/copyWeekOrchestrator';
+import { copyWeekToQuarter } from '../lib/services/orchestrators/copyWeekOrchestrator';
 import type { BulkImportData } from '../components/exercises';
 
 export function usePowerPage(onNavigate: (path: string) => void) {

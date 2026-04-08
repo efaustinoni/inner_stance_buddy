@@ -9,7 +9,7 @@ vi.mock('../../lib/services/quarterService');
 vi.mock('../../lib/services/questionService');
 vi.mock('../../lib/services/answerService');
 vi.mock('../../lib/services/trackerService');
-vi.mock('../../services/orchestrators/copyWeekOrchestrator');
+vi.mock('../../lib/services/orchestrators/copyWeekOrchestrator');
 
 const onNavigate = vi.fn();
 

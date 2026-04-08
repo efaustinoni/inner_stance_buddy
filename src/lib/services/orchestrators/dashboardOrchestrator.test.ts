@@ -2,10 +2,10 @@
 // Tests: dashboardOrchestrator — fetchDashboardData
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { supabase } from '../../lib/supabase';
+import { supabase } from '../../supabase';
 import { fetchDashboardData } from './dashboardOrchestrator';
 
-vi.mock('../../lib/supabase');
+vi.mock('../../supabase');
 
 // Builds a chain whose sync methods return the chain itself, and whose
 // .data / .error properties are used when the chain is awaited directly

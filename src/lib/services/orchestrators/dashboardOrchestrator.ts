@@ -2,8 +2,8 @@
 // Orchestrator: Dashboard
 // Combines: weeks (quarter join) + questions + answers + trackers into one dashboard payload.
 
-import { supabase } from '../../lib/supabase';
-import type { ExerciseWeek } from '../../lib/services/weekService';
+import { supabase } from '../../supabase';
+import type { ExerciseWeek } from '../weekService';
 
 export interface DashboardQuestion {
   id: string;
