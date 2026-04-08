@@ -122,7 +122,7 @@ export async function recordUserAgreement(
     privacy_version: manifest.privacy.lastUpdated,
     terms_version_string: manifest.terms.version,
     privacy_version_string: manifest.privacy.version,
-    user_agent: navigator.userAgent,
+    // user_agent intentionally omitted — see docs/SECURITY_RISKS.md
   });
 
   if (error) {
@@ -133,9 +133,14 @@ export async function recordUserAgreement(
   return true;
 }
 
+// sessionStorage is used instead of localStorage:
+// - clears automatically when the tab closes (limits XSS exfiltration window)
+// - the data is non-sensitive (only version strings + a timestamp)
+// - localStorage would persist across sessions, which is unnecessary for
+//   a short-lived "guest accepted on this device" signal
 export function getLocalAcceptance(): LocalAcceptance | null {
   try {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+    const stored = sessionStorage.getItem(LOCAL_STORAGE_KEY);
     if (!stored) return null;
     return JSON.parse(stored) as LocalAcceptance;
   } catch {
@@ -149,7 +154,7 @@ export function setLocalAcceptance(manifest: LegalManifest): void {
     privacyVersion: manifest.privacy.version,
     acceptedAt: new Date().toISOString(),
   };
-  localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(acceptance));
+  sessionStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(acceptance));
 }
 
 export function compareVersions(v1: string, v2: string): number {

@@ -1,7 +1,7 @@
 {
   "name": "inner-stance-buddy",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.5.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -13,7 +13,8 @@
     "test:coverage": "vitest run --coverage --passWithNoTests",
     "prepare": "husky",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "version:bump": "node scripts/bump-version.js"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx,json,css,md}": "prettier --write"

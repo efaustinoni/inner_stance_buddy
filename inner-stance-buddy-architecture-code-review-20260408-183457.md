@@ -222,9 +222,9 @@ Minor concerns: `navigator.userAgent` is logged in `recordUserAgreement` — whi
 
 **Issues:**
 
-- `localStorage` acceptance for unauthenticated users is accessible to any XSS on the page.
-- No visible rate limiting on the password reset flow beyond a 1-second delay.
-- `navigator.userAgent` captured in legal acceptance records — minor privacy surface.
+- ✅ `localStorage` → `sessionStorage` for guest legal acceptance. Data is non-sensitive (version strings only); `sessionStorage` clears on tab close, reducing XSS exfiltration window.
+- Accepted — see `docs/SECURITY_RISKS.md` RISK-001. No IP-level rate limiting on the password reset flow. Mitigations in place: 1-second delay, SHA-256-salted answer hash, Supabase Auth email rate limits. Disproportionate to fix for a single-user personal app.
+- ✅ `navigator.userAgent` removed from `recordUserAgreement` insert. Column is left nullable in the DB; the field is no longer populated.
 
 ---
 
@@ -246,8 +246,8 @@ Within that context, the tooling is comprehensive. Husky pre-commit hooks enforc
 
 **Issues:**
 
-- No Dependabot or automated dependency vulnerability scanning — worth enabling on GitHub for passive security monitoring even on a solo project.
-- Version bump requires updating two files in sync (`appConfig.ts` + `service-worker.js`); an easy source of human error.
+- ✅ Dependabot is enabled on the GitHub repository for passive dependency vulnerability scanning.
+- ✅ Version bump automated: `npm run version:bump <X.Y.Z>` updates `package.json`, `appConfig.ts`, and `service-worker.js` atomically via `scripts/bump-version.js`. The `DEPLOYMENT_CHECKLIST.md` has been updated accordingly.
 
 ---
 

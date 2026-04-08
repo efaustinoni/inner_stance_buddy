@@ -62,10 +62,24 @@ If a deployment breaks the app:
 
 ## Version bumping
 
-When bumping the version, always update **both** of these together in the same commit:
+Use the bump script to update all three version locations atomically:
 
-1. `src/lib/appConfig.ts` — `versionLabel: 'v.X.Y.Z Beta'`
-2. `public/service-worker.js` — `const CACHE_NAME = 'exercise-journal-vX.Y.Z'`
+```bash
+npm run version:bump 1.5.1
+```
+
+This updates in one pass:
+
+1. `package.json` — `"version": "1.5.1"`
+2. `src/lib/appConfig.ts` — `versionLabel: 'v.1.5.1 Beta'`
+3. `public/service-worker.js` — `CACHE_NAME = 'exercise-journal-v1.5.1'`
+
+Then commit all three files together:
+
+```bash
+git add package.json src/lib/appConfig.ts public/service-worker.js
+git commit -m "chore: bump version to 1.5.1"
+```
 
 If the service worker cache name is not updated, users' browsers will keep serving the old bundle and the version badge will show the wrong number.
 
