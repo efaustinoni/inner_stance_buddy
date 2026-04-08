@@ -19,6 +19,17 @@ export interface ImageExtractedData {
   questions: { label: string; text: string; answer?: string }[];
 }
 
+/**
+ * Adds a single question to a week.
+ * The question text is stored encrypted via pgsodium (write path goes through exercise_questions directly;
+ * decrypted reads use the decrypted_exercise_questions view).
+ *
+ * @param weekId - UUID of the parent week.
+ * @param questionLabel - Short label shown above the question (e.g. "Reflectie 1a").
+ * @param questionText - Full question body.
+ * @param sortOrder - 0-based position within the week.
+ * @returns The created question, or null on DB error.
+ */
 export async function addQuestion(
   weekId: string,
   questionLabel: string,
@@ -44,6 +55,13 @@ export async function addQuestion(
   return data;
 }
 
+/**
+ * Applies partial updates to a question's mutable fields.
+ *
+ * @param questionId - UUID of the question to update.
+ * @param updates - Fields to change (any subset of question_label, question_text, sort_order).
+ * @returns true on success, false on DB error.
+ */
 export async function updateQuestion(
   questionId: string,
   updates: { question_label?: string; question_text?: string; sort_order?: number }
@@ -61,6 +79,12 @@ export async function updateQuestion(
   return true;
 }
 
+/**
+ * Permanently deletes a question and its answers via DB cascade.
+ *
+ * @param questionId - UUID of the question to delete.
+ * @returns true on success, false on DB error.
+ */
 export async function deleteQuestion(questionId: string): Promise<boolean> {
   const { error } = await supabase.from('exercise_questions').delete().eq('id', questionId);
 
@@ -72,6 +96,16 @@ export async function deleteQuestion(questionId: string): Promise<boolean> {
   return true;
 }
 
+/**
+ * Replaces or appends a batch of questions (and optional pre-written answers) to a week.
+ * When `replaceExisting` is true (default), all existing questions, answers, and trackers
+ * for the week are deleted first, then the new batch is inserted in a single round-trip.
+ *
+ * @param weekId - UUID of the target week.
+ * @param questions - Array of question data; `answer` is optional per question.
+ * @param replaceExisting - When true, wipes existing questions before inserting. Default: true.
+ * @returns true on success, false on auth failure or DB error.
+ */
 export async function bulkImportQuestions(
   weekId: string,
   questions: { label: string; text: string; answer?: string }[],

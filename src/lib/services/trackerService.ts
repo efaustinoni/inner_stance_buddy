@@ -41,6 +41,13 @@ export interface TrackerWithCheckIns extends ProgressTracker {
   answer?: ExerciseAnswer;
 }
 
+/**
+ * Creates a new progress tracker for a question, starting today.
+ * The tracker drives the daily check-in calendar on ProgressTrackingPage.
+ *
+ * @param questionId - UUID of the question to track.
+ * @returns Result<ProgressTracker> — ok with the new tracker, or err with code 'auth' or 'db'.
+ */
 export async function createProgressTracker(questionId: string): Promise<Result<ProgressTracker>> {
   const user = await getCurrentUser();
   if (!user) return err('auth', 'Not authenticated');
@@ -95,6 +102,13 @@ export async function getTrackersForQuestions(
   return trackerMap;
 }
 
+/**
+ * Fetches the single active tracker for a question belonging to the current user.
+ * Returns null when no tracker exists or the user is unauthenticated.
+ * Prefer {@link getTrackersForQuestions} when checking multiple questions at once.
+ *
+ * @param questionId - UUID of the question whose tracker to look up.
+ */
 export async function getTrackerForQuestion(questionId: string): Promise<ProgressTracker | null> {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -114,6 +128,13 @@ export async function getTrackerForQuestion(questionId: string): Promise<Progres
   return data;
 }
 
+/**
+ * Fetches all active trackers for the current user, joined with their question and week data.
+ * Used by ProgressTrackingPage to list everything the user is currently tracking.
+ *
+ * @returns Array of trackers with embedded question and week objects.
+ *          Silently returns [] on auth failure or when no active trackers exist.
+ */
 export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
   const user = await getCurrentUser();
   if (!user) return [];
@@ -149,6 +170,15 @@ export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
   }, []);
 }
 
+/**
+ * Toggles the done/undone state of a check-in for a given tracker and date.
+ * Uses upsert on UNIQUE(tracker_id, check_in_date) — no pre-read needed.
+ *
+ * @param trackerId - UUID of the parent tracker.
+ * @param date - ISO date string (YYYY-MM-DD).
+ * @param isDone - New done state to persist.
+ * @returns true on success, false on DB error.
+ */
 export async function toggleCheckIn(
   trackerId: string,
   date: string,
@@ -173,6 +203,12 @@ export async function toggleCheckIn(
   return true;
 }
 
+/**
+ * Permanently deletes a progress tracker and all its check-ins via DB cascade.
+ *
+ * @param trackerId - UUID of the tracker to delete.
+ * @returns true on success, false on DB error.
+ */
 export async function deleteProgressTracker(trackerId: string): Promise<boolean> {
   const { error } = await supabase.from('progress_trackers').delete().eq('id', trackerId);
 
@@ -184,6 +220,17 @@ export async function deleteProgressTracker(trackerId: string): Promise<boolean>
   return true;
 }
 
+/**
+ * Updates the notes field for a check-in on a given date.
+ * Uses upsert on UNIQUE(tracker_id, check_in_date):
+ * - INSERT (new row): `is_done` uses the DB DEFAULT (false).
+ * - UPDATE (existing row): only `notes` and `updated_at` are changed; `is_done` is preserved.
+ *
+ * @param trackerId - UUID of the parent tracker.
+ * @param date - ISO date string (YYYY-MM-DD).
+ * @param notes - The reflection text to save.
+ * @returns true on success, false on DB error.
+ */
 export async function updateCheckInNotes(
   trackerId: string,
   date: string,

@@ -19,6 +19,15 @@ export interface ExerciseAnswer {
   updated_at: string;
 }
 
+/**
+ * Saves (or updates) the current user's answer to a question.
+ * Uses upsert on UNIQUE(question_id, user_id) — idempotent and safe to retry.
+ * Retried automatically on transient db/network failures via `withRetry`.
+ *
+ * @param questionId - UUID of the question being answered.
+ * @param answerText - The user's answer text (stored encrypted via pgsodium).
+ * @returns Result<void> — ok on success, err with code 'auth' or 'db' on failure.
+ */
 export async function saveAnswer(questionId: string, answerText: string): Promise<Result> {
   // Upsert is idempotent — safe to retry on transient db/network failures.
   // isTransientResult never retries auth errors (permanent — retrying won't help).

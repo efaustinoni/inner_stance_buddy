@@ -253,7 +253,7 @@ _What this measures: How easy it is for a new developer to understand, set up, a
 
 The documentation is a genuine strength of this project — notably above average for a codebase of this size. The `docs/` folder contains: `FRONTEND.md` (component structure and routing), `BACKEND.md` (all tables, columns, and edge functions), `DEPLOYMENT_CHECKLIST.md` (step-by-step with lessons learned), `SECURITY_CONFIGURATION.md`, `CHANGELOG.md`, `USER_GUIDE.md`, `CONTRIBUTING.md`, `PWA_INSTALLATION_GUIDE.md`, and `DATA_RETENTION_POLICY.md`. Source files carry creation/update headers. Inline comments explain non-obvious decisions. The BACKEND.md documents every table, column type, and edge function parameter with enough detail to reconstruct the schema.
 
-Minor gaps: service functions don't carry JSDoc annotations — TypeScript types alone document parameters and returns, which is usually sufficient but leaves intent undocumented. There is no ARCHITECTURE.md or ADR document explaining key technology choices (e.g., why wouter over React Router).
+Both documentation gaps have been addressed. All exported service functions across `weekService`, `quarterService`, `questionService`, `answerService`, and `trackerService` now carry `@param` and `@returns` JSDoc annotations. Five ADR documents have been added to `docs/adr/` explaining the key technology choices.
 
 **Strengths:**
 
@@ -262,11 +262,13 @@ Minor gaps: service functions don't carry JSDoc annotations — TypeScript types
 - File-level creation/update headers in most source files.
 - README covers stack, deployment workflow, local setup, and code quality commands.
 - ✅ `.env.example` present with placeholder values for both required environment variables.
+- ✅ JSDoc on all exported service functions (`@param` + `@returns` on every public function).
+- ✅ `docs/adr/` created with 5 ADRs: wouter, Supabase, bolt.new deployment, pgsodium encryption, module-level cache.
 
 **Issues:**
 
-- No JSDoc on service functions — types are the only documentation for parameters and return values.
-- No ADR (Architecture Decision Records) explaining key technology choices.
+- ✅ JSDoc added to all service functions in weekService, quarterService, questionService, answerService, trackerService.
+- ✅ ADRs created in `docs/adr/` for all major technology choices.
 
 ---
 

@@ -13,6 +13,7 @@ export interface ExerciseQuarter {
   updated_at: string;
 }
 
+/** Fetches all quarters for the current user, ordered by creation date. Throws on DB error. Results are cached for 30 s. */
 export async function fetchUserQuarters(): Promise<ExerciseQuarter[]> {
   const cached = dataCache.get<ExerciseQuarter[]>(CACHE_KEY.QUARTERS);
   if (cached) return cached;
@@ -32,6 +33,12 @@ export async function fetchUserQuarters(): Promise<ExerciseQuarter[]> {
   return result;
 }
 
+/**
+ * Creates a new quarter for the current user.
+ *
+ * @param label - Display name (e.g. "2026-Q1"). Leading/trailing whitespace is trimmed.
+ * @returns The created quarter, or null on auth failure or DB error.
+ */
 export async function createQuarter(label: string): Promise<ExerciseQuarter | null> {
   const user = await getCurrentUser();
   if (!user) return null;
@@ -51,6 +58,13 @@ export async function createQuarter(label: string): Promise<ExerciseQuarter | nu
   return data;
 }
 
+/**
+ * Renames a quarter.
+ *
+ * @param quarterId - UUID of the quarter to rename.
+ * @param label - New display name. Leading/trailing whitespace is trimmed.
+ * @returns true on success, false on DB error.
+ */
 export async function updateQuarter(quarterId: string, label: string): Promise<boolean> {
   const { error } = await supabase
     .from('exercise_quarters')
@@ -67,6 +81,13 @@ export async function updateQuarter(quarterId: string, label: string): Promise<b
   return true;
 }
 
+/**
+ * Permanently deletes a quarter. Weeks assigned to this quarter become unassigned
+ * (the `quarter_id` FK on exercise_weeks is set to NULL by the DB constraint).
+ *
+ * @param quarterId - UUID of the quarter to delete.
+ * @returns true on success, false on DB error.
+ */
 export async function deleteQuarter(quarterId: string): Promise<boolean> {
   const { error } = await supabase.from('exercise_quarters').delete().eq('id', quarterId);
 
