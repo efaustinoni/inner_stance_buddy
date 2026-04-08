@@ -77,20 +77,6 @@ export async function bulkImportQuestions(
   questions: { label: string; text: string; answer?: string }[],
   replaceExisting: boolean = true
 ): Promise<boolean> {
-  console.log(
-    '[BulkImport] Received questions:',
-    JSON.stringify(
-      questions.map((q) => ({
-        label: q.label,
-        text: q.text?.substring(0, 30),
-        hasAnswer: !!q.answer,
-        answerPreview: q.answer?.substring(0, 30),
-      })),
-      null,
-      2
-    )
-  );
-
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -120,8 +106,6 @@ export async function bulkImportQuestions(
       await supabase.from('progress_trackers').delete().in('question_id', questionIds);
 
       await supabase.from('exercise_questions').delete().eq('week_id', weekId);
-
-      console.log(`[BulkImport] Deleted ${existingQuestions.length} existing questions for week`);
     }
   }
 
@@ -147,8 +131,6 @@ export async function bulkImportQuestions(
     insertedQuestions.push(inserted);
   }
 
-  console.log(`[BulkImport] Inserted ${insertedQuestions.length} questions`);
-
   const answersToInsert = questions
     .map((q, index) => {
       if (!q.answer) return null;
@@ -169,9 +151,6 @@ export async function bulkImportQuestions(
       console.error('[BulkImport] Error inserting answers:', answerError);
       return false;
     }
-    console.log(`[BulkImport] Inserted ${answersToInsert.length} answers`);
-  } else {
-    console.log('[BulkImport] No answers to insert');
   }
 
   return true;

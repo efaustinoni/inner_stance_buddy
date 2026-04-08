@@ -10,7 +10,7 @@ export function registerServiceWorker() {
           console.log('ServiceWorker registration successful:', registration.scope);
         })
         .catch((error) => {
-          console.log('ServiceWorker registration failed:', error);
+          console.error('ServiceWorker registration failed:', error);
         });
     });
   }

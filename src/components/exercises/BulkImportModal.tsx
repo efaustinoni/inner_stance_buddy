@@ -140,16 +140,6 @@ function parseCSV(csvText: string): BulkImportData {
   );
   const dataLine = parseCSVLine(lines[1]);
 
-  console.log('[CSV Parser] Headers:', headers);
-  console.log('[CSV Parser] Data columns:', dataLine.length);
-  dataLine.forEach((val, idx) => {
-    if (headers[idx]?.includes('answer')) {
-      console.log(
-        `[CSV Parser] ${headers[idx]}: "${val.substring(0, 100)}..." (length: ${val.length})`
-      );
-    }
-  });
-
   const weekIdx = headers.findIndex((h) => h === 'week');
   const themeIdx = headers.findIndex((h) => h === 'theme' || h === 'thema');
 
@@ -171,18 +161,12 @@ function parseCSV(csvText: string): BulkImportData {
     const directAnswerIdx = headers.indexOf(directAnswerKey);
     let answer: string | undefined;
 
-    console.log(
-      `[CSV Parser] Q${qNum}: Looking for ${directAnswerKey}, found at index ${directAnswerIdx}, value length: ${dataLine[directAnswerIdx]?.length || 0}`
-    );
-
     if (directAnswerIdx !== -1 && dataLine[directAnswerIdx]) {
       const rawAnswer = dataLine[directAnswerIdx];
-      console.log(`[CSV Parser] Q${qNum}: Raw answer has ${rawAnswer.split('|').length} parts`);
       answer = rawAnswer
         .split('|')
         .map((a) => a.trim())
         .join('\n');
-      console.log(`[CSV Parser] Q${qNum}: Final answer length: ${answer.length}`);
     } else {
       const subAnswers: string[] = [];
       const answerLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'];
@@ -197,7 +181,6 @@ function parseCSV(csvText: string): BulkImportData {
 
       if (subAnswers.length > 0) {
         answer = subAnswers.join('\n');
-        console.log(`[CSV Parser] Q${qNum}: Using ${subAnswers.length} sub-answers`);
       }
     }
 
