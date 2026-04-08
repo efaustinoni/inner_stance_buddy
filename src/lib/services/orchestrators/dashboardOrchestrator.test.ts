@@ -6,6 +6,8 @@ import { supabase } from '../../supabase';
 import { fetchDashboardData } from './dashboardOrchestrator';
 
 vi.mock('../../supabase');
+vi.mock('../../getCurrentUser');
+vi.mock('../../dataCache');
 
 // Builds a chain whose sync methods return the chain itself, and whose
 // .data / .error properties are used when the chain is awaited directly

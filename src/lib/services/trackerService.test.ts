@@ -12,6 +12,8 @@ import {
 } from './trackerService';
 
 vi.mock('../supabase');
+vi.mock('../getCurrentUser');
+vi.mock('../dataCache');
 
 function makeChain(
   overrides: {

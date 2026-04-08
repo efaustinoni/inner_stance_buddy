@@ -6,6 +6,8 @@ import { supabase } from '../supabase';
 import { fetchUserQuarters, createQuarter, updateQuarter, deleteQuarter } from './quarterService';
 
 vi.mock('../supabase');
+vi.mock('../getCurrentUser');
+vi.mock('../dataCache');
 
 function makeChain(data: unknown = null, error: unknown = null) {
   const promise = Promise.resolve({ data, error });

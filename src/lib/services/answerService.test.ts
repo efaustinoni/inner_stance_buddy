@@ -7,6 +7,8 @@ import { supabase } from '../supabase';
 import { saveAnswer } from './answerService';
 
 vi.mock('../supabase');
+vi.mock('../getCurrentUser');
+vi.mock('../dataCache');
 
 // upsert is a terminal promise; error controls whether it resolves with an error.
 function makeChain(upsertError: unknown = null) {

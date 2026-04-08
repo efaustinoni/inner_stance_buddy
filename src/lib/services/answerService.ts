@@ -5,6 +5,8 @@
 import { supabase } from '../supabase';
 import { ok, err, type Result } from './types';
 import { withRetry, isTransientResult } from '../withRetry';
+import { dataCache, CACHE_KEY } from '../dataCache';
+import { getCurrentUser } from '../getCurrentUser';
 
 export type { Result };
 
@@ -21,9 +23,7 @@ export async function saveAnswer(questionId: string, answerText: string): Promis
   // Upsert is idempotent — safe to retry on transient db/network failures.
   // isTransientResult never retries auth errors (permanent — retrying won't help).
   return withRetry(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getCurrentUser();
     if (!user) return err('auth', 'Not authenticated');
 
     const { error } = await supabase.from('exercise_answers').upsert(
@@ -41,6 +41,7 @@ export async function saveAnswer(questionId: string, answerText: string): Promis
       return err('db', error.message);
     }
 
+    dataCache.invalidate(CACHE_KEY.DASHBOARD);
     return ok(undefined);
   }, isTransientResult);
 }

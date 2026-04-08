@@ -2,6 +2,8 @@
 // Domain: Progress Trackers and Check-ins
 
 import { supabase } from '../supabase';
+import { dataCache, CACHE_KEY } from '../dataCache';
+import { getCurrentUser } from '../getCurrentUser';
 import type { ExerciseQuestion } from './questionService';
 import type { ExerciseWeek } from './weekService';
 import type { ExerciseAnswer } from './answerService';
@@ -40,9 +42,7 @@ export interface TrackerWithCheckIns extends ProgressTracker {
 }
 
 export async function createProgressTracker(questionId: string): Promise<Result<ProgressTracker>> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return err('auth', 'Not authenticated');
 
   const { data, error } = await supabase
@@ -60,6 +60,7 @@ export async function createProgressTracker(questionId: string): Promise<Result<
     return err('db', error.message);
   }
 
+  dataCache.invalidate(CACHE_KEY.DASHBOARD);
   return ok(data);
 }
 
@@ -72,9 +73,7 @@ export async function getTrackersForQuestions(
 ): Promise<Record<string, ProgressTracker | null>> {
   if (questionIds.length === 0) return {};
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return {};
 
   const { data, error } = await supabase
@@ -97,9 +96,7 @@ export async function getTrackersForQuestions(
 }
 
 export async function getTrackerForQuestion(questionId: string): Promise<ProgressTracker | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -118,9 +115,7 @@ export async function getTrackerForQuestion(questionId: string): Promise<Progres
 }
 
 export async function fetchUserTrackers(): Promise<TrackerWithQuestion[]> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return [];
 
   const { data: trackers, error: trackersError } = await supabase

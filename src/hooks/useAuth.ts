@@ -6,6 +6,7 @@ import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { detectUserTimezone } from '../lib/timezone';
 import { toast } from '../lib/toast';
+import { dataCache } from '../lib/dataCache';
 
 export interface AuthState {
   user: User | null;
@@ -108,6 +109,7 @@ export function useAuth(): AuthState {
 
   // Sign out — router handles redirect when user becomes null
   async function handleSignOut() {
+    dataCache.clear(); // evict all cached data before the session ends
     try {
       await supabase.auth.signOut();
     } catch (error) {

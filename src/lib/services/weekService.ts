@@ -2,6 +2,8 @@
 // Domain: Weeks
 
 import { supabase } from '../supabase';
+import { dataCache, CACHE_KEY } from '../dataCache';
+import { getCurrentUser } from '../getCurrentUser';
 import type { ExerciseQuestion } from './questionService';
 import type { ExerciseAnswer } from './answerService';
 
@@ -30,6 +32,9 @@ export interface WeekWithQuestions extends ExerciseWeek {
 }
 
 export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
+  const cached = dataCache.get<ExerciseWeek[]>(CACHE_KEY.WEEKS);
+  if (cached) return cached;
+
   const { data, error } = await supabase
     .from('exercise_weeks')
     .select('*, exercise_quarters(label)')
@@ -41,11 +46,13 @@ export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
   }
 
   type WeekWithJoin = ExerciseWeek & { exercise_quarters?: { label: string } | null };
-  return (data || []).map((w: WeekWithJoin) => ({
+  const result = (data || []).map((w: WeekWithJoin) => ({
     ...w,
     quarter_label: w.exercise_quarters?.label ?? null,
     exercise_quarters: undefined,
   }));
+  dataCache.set(CACHE_KEY.WEEKS, result);
+  return result;
 }
 
 export async function fetchWeekWithQuestions(weekId: string): Promise<WeekWithQuestions | null> {
@@ -97,9 +104,7 @@ export async function createWeek(
   topic: string,
   quarterId?: string | null
 ): Promise<ExerciseWeek | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) return null;
 
   const { data, error } = await supabase
@@ -119,6 +124,7 @@ export async function createWeek(
     return null;
   }
 
+  dataCache.invalidate(CACHE_KEY.WEEKS, CACHE_KEY.DASHBOARD);
   return data;
 }
 
@@ -136,6 +142,7 @@ export async function moveWeekToQuarter(
     return false;
   }
 
+  dataCache.invalidate(CACHE_KEY.WEEKS, CACHE_KEY.DASHBOARD);
   return true;
 }
 
@@ -153,6 +160,7 @@ export async function updateWeek(
     return false;
   }
 
+  dataCache.invalidate(CACHE_KEY.WEEKS, CACHE_KEY.DASHBOARD);
   return true;
 }
 
@@ -164,5 +172,6 @@ export async function deleteWeek(weekId: string): Promise<boolean> {
     return false;
   }
 
+  dataCache.invalidate(CACHE_KEY.WEEKS, CACHE_KEY.DASHBOARD);
   return true;
 }

@@ -12,6 +12,8 @@ import {
 } from './weekService';
 
 vi.mock('../supabase');
+vi.mock('../getCurrentUser');
+vi.mock('../dataCache');
 
 /**
  * Creates a thenable mock chain so that `await chain.method()` or

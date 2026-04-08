@@ -3,6 +3,8 @@
 // Combines: weeks (quarter join) + questions + answers + trackers into one dashboard payload.
 
 import { supabase } from '../../supabase';
+import { dataCache, CACHE_KEY } from '../../dataCache';
+import { getCurrentUser } from '../../getCurrentUser';
 import type { ExerciseWeek } from '../weekService';
 
 export interface DashboardQuestion {
@@ -23,9 +25,12 @@ export async function fetchDashboardData(): Promise<{
   weeks: ExerciseWeek[];
   questions: DashboardQuestion[];
 }> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const cached = dataCache.get<{ weeks: ExerciseWeek[]; questions: DashboardQuestion[] }>(
+    CACHE_KEY.DASHBOARD
+  );
+  if (cached) return cached;
+
+  const user = await getCurrentUser();
   if (!user) return { weeks: [], questions: [] };
 
   const { data: weeksRaw } = await supabase
@@ -93,5 +98,7 @@ export async function fetchDashboardData(): Promise<{
     };
   });
 
-  return { weeks, questions: dashboardQuestions };
+  const result = { weeks, questions: dashboardQuestions };
+  dataCache.set(CACHE_KEY.DASHBOARD, result);
+  return result;
 }
