@@ -1,22 +1,17 @@
 // Created: 2026-02-13
-// Last Updated: 2026-02-13 15:35
+// Last Updated: 2026-04-08 (auth state consumed from AuthContext)
 
 import { BookOpen, LogOut } from 'lucide-react';
 import { Avatar } from '../ui/Avatar';
+import { useAuthContext } from '../../contexts/AuthContext';
 
 interface MainNavigationProps {
-  userName?: string;
-  userAvatar?: string | null;
   onNavigate: (path: string) => void;
-  onSignOut: () => void;
 }
 
-export function MainNavigation({
-  userName,
-  userAvatar,
-  onNavigate,
-  onSignOut,
-}: MainNavigationProps) {
+export function MainNavigation({ onNavigate }: MainNavigationProps) {
+  const { userName, handleSignOut } = useAuthContext();
+
   return (
     <header className="bg-navy-900 border-b border-navy-800 sticky top-0 z-40">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -35,11 +30,11 @@ export function MainNavigation({
               onClick={() => onNavigate('/profile')}
               className="flex items-center gap-2 px-3 py-1.5 rounded-lg hover:bg-navy-800 transition-colors"
             >
-              <Avatar src={userAvatar} name={userName} size="sm" />
+              <Avatar name={userName} size="sm" />
               <span className="text-sm text-content-muted hidden md:block">{userName}</span>
             </button>
             <button
-              onClick={onSignOut}
+              onClick={handleSignOut}
               title="Sign out"
               className="p-2 text-content-muted hover:text-status-error hover:bg-navy-800 rounded-lg transition-colors"
             >

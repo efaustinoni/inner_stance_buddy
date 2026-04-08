@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import type { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { detectUserTimezone } from '../lib/timezone';
+import { toast } from '../lib/toast';
 
 export interface AuthState {
   user: User | null;
@@ -107,7 +108,12 @@ export function useAuth(): AuthState {
 
   // Sign out — router handles redirect when user becomes null
   async function handleSignOut() {
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+    } catch (error) {
+      console.error('Error signing out:', error);
+      toast.error('Failed to sign out. Please try again.');
+    }
   }
 
   return {

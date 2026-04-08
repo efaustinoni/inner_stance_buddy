@@ -207,34 +207,22 @@ describe('deleteProgressTracker', () => {
 });
 
 // ─── updateCheckInNotes ───────────────────────────────────────────────────────
+// Uses upsert on UNIQUE(tracker_id, check_in_date) — no pre-read needed
 
 describe('updateCheckInNotes', () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it('creates a new check-in with notes when none exists', async () => {
-    vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeChain({ maybeSingleData: null }) as never) // select → not found
-      .mockReturnValueOnce(makeChain({ error: null }) as never); // insert → success
+  it('returns true when upsert succeeds', async () => {
+    vi.mocked(supabase.from).mockReturnValue(makeUpsertChain(null) as never);
 
     const result = await updateCheckInNotes('t1', '2026-01-15', 'Great session');
 
     expect(result).toBe(true);
+    expect(supabase.from).toHaveBeenCalledWith('progress_check_ins');
   });
 
-  it('updates notes on an existing check-in', async () => {
-    vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeChain({ maybeSingleData: { id: 'ci1' } }) as never) // select → existing
-      .mockReturnValueOnce(makeChain({ error: null }) as never); // update → success
-
-    const result = await updateCheckInNotes('t1', '2026-01-15', 'Updated notes');
-
-    expect(result).toBe(true);
-  });
-
-  it('returns false when the write fails', async () => {
-    vi.mocked(supabase.from)
-      .mockReturnValueOnce(makeChain({ maybeSingleData: null }) as never)
-      .mockReturnValueOnce(makeChain({ error: { message: 'Write failed' } }) as never);
+  it('returns false when upsert fails', async () => {
+    vi.mocked(supabase.from).mockReturnValue(makeUpsertChain({ message: 'Write failed' }) as never);
 
     const result = await updateCheckInNotes('t1', '2026-01-15', 'Some notes');
 

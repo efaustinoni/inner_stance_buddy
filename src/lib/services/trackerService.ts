@@ -63,6 +63,39 @@ export async function createProgressTracker(questionId: string): Promise<Result<
   return ok(data);
 }
 
+/**
+ * Batch-fetch trackers for multiple questions in a single DB round-trip.
+ * Returns a map of questionId → tracker (null when no tracker exists for that question).
+ */
+export async function getTrackersForQuestions(
+  questionIds: string[]
+): Promise<Record<string, ProgressTracker | null>> {
+  if (questionIds.length === 0) return {};
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return {};
+
+  const { data, error } = await supabase
+    .from('progress_trackers')
+    .select('*')
+    .eq('user_id', user.id)
+    .in('question_id', questionIds);
+
+  if (error) {
+    console.error('Error fetching trackers for questions:', error);
+    return {};
+  }
+
+  // Pre-seed every requested id with null so callers always get a complete map
+  const trackerMap: Record<string, ProgressTracker | null> = {};
+  for (const qId of questionIds) {
+    trackerMap[qId] = data?.find((t) => t.question_id === qId) ?? null;
+  }
+  return trackerMap;
+}
+
 export async function getTrackerForQuestion(questionId: string): Promise<ProgressTracker | null> {
   const {
     data: { user },
@@ -161,35 +194,24 @@ export async function updateCheckInNotes(
   date: string,
   notes: string
 ): Promise<boolean> {
-  const { data: existing } = await supabase
-    .from('progress_check_ins')
-    .select('id')
-    .eq('tracker_id', trackerId)
-    .eq('check_in_date', date)
-    .maybeSingle();
-
-  if (existing) {
-    const { error } = await supabase
-      .from('progress_check_ins')
-      .update({ notes, updated_at: new Date().toISOString() })
-      .eq('id', existing.id);
-
-    if (error) {
-      console.error('Error updating notes:', error);
-      return false;
-    }
-  } else {
-    const { error } = await supabase.from('progress_check_ins').insert({
+  // Upsert on UNIQUE(tracker_id, check_in_date).
+  // is_done is intentionally absent from the payload:
+  //   INSERT  → DB DEFAULT (false) initialises it.
+  //   UPDATE  → DO UPDATE SET only covers the columns listed here,
+  //             so the existing is_done value is preserved.
+  const { error } = await supabase.from('progress_check_ins').upsert(
+    {
       tracker_id: trackerId,
       check_in_date: date,
-      is_done: false,
       notes,
-    });
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'tracker_id,check_in_date' }
+  );
 
-    if (error) {
-      console.error('Error creating check-in with notes:', error);
-      return false;
-    }
+  if (error) {
+    console.error('Error updating check-in notes:', error);
+    return false;
   }
 
   return true;

@@ -2,10 +2,18 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import { MainNavigation } from './MainNavigation';
 
+const mockHandleSignOut = vi.fn();
+
+vi.mock('../../contexts/AuthContext', () => ({
+  useAuthContext: () => ({
+    userName: 'Alice',
+    handleSignOut: mockHandleSignOut,
+  }),
+}));
+
 describe('MainNavigation', () => {
   const defaultProps = {
     onNavigate: vi.fn(),
-    onSignOut: vi.fn(),
   };
 
   it('renders the app name', () => {
@@ -20,7 +28,7 @@ describe('MainNavigation', () => {
   });
 
   it('calls onNavigate with /profile when avatar button clicked', () => {
-    render(<MainNavigation {...defaultProps} userName="Alice" />);
+    render(<MainNavigation {...defaultProps} />);
     const profileBtn = screen
       .getAllByRole('button')
       .find((b) => b.className.includes('rounded-lg'));
@@ -28,16 +36,16 @@ describe('MainNavigation', () => {
     expect(defaultProps.onNavigate).toHaveBeenCalledWith('/profile');
   });
 
-  it('calls onSignOut when sign-out button clicked', () => {
+  it('calls handleSignOut from context when sign-out button clicked', () => {
     render(<MainNavigation {...defaultProps} />);
     const signOutBtn = screen.getByTitle('Sign out');
     fireEvent.click(signOutBtn);
-    expect(defaultProps.onSignOut).toHaveBeenCalledOnce();
+    expect(mockHandleSignOut).toHaveBeenCalledOnce();
   });
 
-  it('renders userName when provided', () => {
-    render(<MainNavigation {...defaultProps} userName="Bob" />);
-    expect(screen.getByText('Bob')).toBeInTheDocument();
+  it('renders userName from context', () => {
+    render(<MainNavigation {...defaultProps} />);
+    expect(screen.getByText('Alice')).toBeInTheDocument();
   });
 
   it('renders header element', () => {

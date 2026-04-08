@@ -11,3 +11,7 @@
 ErrorBoundary
 # Toast: event-bus renderer; tested implicitly via components that trigger toasts
 Toast
+# useAuthForm: form logic extracted from AuthPage; fully covered by AuthPage.test.tsx
+useAuthForm
+# useWeekData: data loading extracted from usePowerPage; fully covered by usePowerPage.test.ts
+useWeekData

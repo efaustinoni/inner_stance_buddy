@@ -1,6 +1,6 @@
 # Frontend Documentation
 
-## 31 Components
+## 33 Components
 
 All React components live under `src/components/`. Subdirectories group related components by feature or layer.
 
@@ -27,6 +27,11 @@ Password reset request page. Accepts a user's email address and calls the `passw
 
 `src/components/LegalAcceptanceBanner.tsx`
 Sticky banner that appears when the active legal documents (terms/privacy) have been updated and the user has not yet accepted the new versions. Delegates acceptance handling to the parent via callback.
+
+#### LegalOverlay
+
+`src/components/LegalOverlay.tsx`
+Wrapper component that owns the public-path exclusion list and the needs-update check for legal documents. Renders `LegalAcceptanceBanner` only when the current route requires re-acceptance. Reads the current path via wouter internally so the app shell does not need to know about public-path logic.
 
 #### LegalPage
 
@@ -109,12 +114,12 @@ Quarter-filter badge strip rendered at the top of PowerPage. Displays "All", one
 #### DashboardLayout
 
 `src/components/layout/DashboardLayout.tsx`
-Shell layout that wraps all authenticated page content. Renders the MainNavigation header above a centred content area (`max-w-5xl`). Passes user info and callbacks down to the navigation.
+Shell layout that wraps all authenticated page content. Renders `MainNavigation` above a centred content area (`max-w-5xl`). Accepts only `onNavigate` and `children` — auth state is read from `AuthContext` by `MainNavigation` directly.
 
 #### MainNavigation
 
 `src/components/layout/MainNavigation.tsx`
-Sticky top navigation bar. Displays the Exercise Journal brand logo/name on the left and a user avatar button + sign-out button on the right. Navigates to the profile page on avatar click.
+Sticky top navigation bar. Displays the Exercise Journal brand logo/name on the left and a user avatar button + sign-out button on the right. Reads `userName` and `handleSignOut` from `AuthContext` — no auth props needed from the parent.
 
 ---
 
@@ -134,6 +139,15 @@ Week management page ("Manage Weeks"). Shows a collapsible list of weeks with qu
 
 `src/components/pages/ProgressTrackingPage.tsx`
 Daily check-in tracker for a single exercise question. Renders a scrollable list of calendar dates from the tracker's start date to today. Each date row can be toggled done/undone and has an expandable notes field.
+
+---
+
+### auth/ Components
+
+#### VerificationScreen
+
+`src/components/auth/VerificationScreen.tsx`
+Standalone view shown after a successful sign-up when email confirmation is required. Displays a check-your-email message, a resend button, and a back-to-sign-in link. Extracted from `AuthPage` to keep that component focused on form rendering.
 
 ---
 
@@ -185,14 +199,19 @@ Toast notification renderer. Subscribes to the `src/lib/toast.ts` event bus and 
 
 ---
 
-## 4 Hooks
+## 6 Hooks
 
 Custom React hooks live in `src/hooks/`. Each hook owns a specific slice of state and logic, keeping page components focused purely on rendering.
 
 #### useAuth
 
 `src/hooks/useAuth.ts`
-Manages the global authentication state. Loads the current user on mount via `supabase.auth.getUser`, subscribes to `onAuthStateChange` for live updates, auto-fills the user's timezone if still set to UTC, and exposes `handleSignOut`. Returned by the root app shell and passed down as props.
+Manages the global authentication state. Loads the current user on mount via `supabase.auth.getUser`, subscribes to `onAuthStateChange` for live updates, auto-fills the user's timezone if still set to UTC, and exposes `handleSignOut`. Called once inside `AuthProvider` — consumers access the result through the auth context hook.
+
+#### useAuthForm
+
+`src/hooks/useAuthForm.ts`
+Owns all state, effects, validation, and submit logic for the sign-in / sign-up forms. Extracted from `AuthPage.tsx` to keep that component focused on rendering. Manages mode switching, browser autofill detection, form validation memos, `handleSubmit`, `handleResendVerification`, `switchMode`, and `handleBackToSignIn`.
 
 #### useDashboard
 
@@ -207,4 +226,9 @@ Manages legal acceptance state for the current user. Fetches the active legal ma
 #### usePowerPage
 
 `src/hooks/usePowerPage.ts`
-Owns all state and logic for `PowerPage` (Manage Weeks). Handles loading weeks and quarters, expanding/collapsing week rows, all modal open/close state, and every CRUD handler for weeks, quarters, questions, answers, and progress trackers. Extracted in ITEM-04.
+Owns modal state and all CRUD action handlers for `PowerPage` (Manage Weeks). Data loading and expand-state are delegated to `useWeekData`. Manages week/quarter/question create, update, delete, and copy operations; bulk import; answer saving; progress tracker creation; and a `pendingDeleteQuestion` state that drives the inline question-delete confirmation modal.
+
+#### useWeekData
+
+`src/hooks/useWeekData.ts`
+Manages week and quarter data for `usePowerPage`: loading, expand/collapse, active quarter filter, lazy week-with-questions fetching, and tracker batch queries. Extracted from `usePowerPage` so the two concerns (data vs. actions) live in separate, testable units.

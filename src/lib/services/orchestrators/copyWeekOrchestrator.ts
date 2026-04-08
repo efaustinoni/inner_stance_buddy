@@ -28,9 +28,9 @@ export async function copyWeekToQuarter(
     .insert({
       user_id: user.id,
       week_number: sourceWeek.week_number,
-      title: sourceWeek.title,
       topic: sourceWeek.topic,
       quarter_id: targetQuarterId,
+      // title is omitted — the DB DEFAULT ('Exercise') is always correct
     })
     .select()
     .single();

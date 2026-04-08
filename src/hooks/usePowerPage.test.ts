@@ -5,6 +5,8 @@ import { renderHook, act, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fetchUserWeeks } from '../lib/services/weekService';
 import { fetchUserQuarters } from '../lib/services/quarterService';
+import { deleteQuestion } from '../lib/services/questionService';
+import { createQuarter, deleteQuarter } from '../lib/services/quarterService';
 import { usePowerPage } from './usePowerPage';
 
 vi.mock('../lib/services/weekService');
@@ -123,5 +125,142 @@ describe('usePowerPage', () => {
 
     expect(result.current.weekModalOpen).toBe(true);
     expect(result.current.editingWeek).toBeNull();
+  });
+
+  it('handleEditWeek sets editingWeek and opens modal', async () => {
+    vi.mocked(fetchUserWeeks).mockResolvedValue([mockWeek]);
+
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.handleEditWeek('w1');
+    });
+
+    expect(result.current.editingWeek).toMatchObject({ id: 'w1' });
+    expect(result.current.weekModalOpen).toBe(true);
+  });
+
+  it('handleEditWeek does nothing for unknown week id', async () => {
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.handleEditWeek('nonexistent');
+    });
+
+    expect(result.current.editingWeek).toBeNull();
+    expect(result.current.weekModalOpen).toBe(false);
+  });
+});
+
+// ─── Question delete pending state ────────────────────────────────────────
+
+describe('usePowerPage — question delete flow', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchUserWeeks).mockResolvedValue([]);
+    vi.mocked(fetchUserQuarters).mockResolvedValue([]);
+  });
+
+  it('handleDeleteQuestion sets pendingDeleteQuestion without deleting', async () => {
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.pendingDeleteQuestion).toBeNull();
+
+    act(() => {
+      result.current.handleDeleteQuestion('q1', 'w1');
+    });
+
+    expect(result.current.pendingDeleteQuestion).toEqual({ questionId: 'q1', weekId: 'w1' });
+    // deleteQuestion should NOT have been called yet
+    expect(deleteQuestion).not.toHaveBeenCalled();
+  });
+
+  it('handleCancelDeleteQuestion clears pendingDeleteQuestion', async () => {
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.handleDeleteQuestion('q1', 'w1');
+    });
+    expect(result.current.pendingDeleteQuestion).not.toBeNull();
+
+    act(() => {
+      result.current.handleCancelDeleteQuestion();
+    });
+    expect(result.current.pendingDeleteQuestion).toBeNull();
+  });
+
+  it('handleConfirmDeleteQuestion calls deleteQuestion and clears pending', async () => {
+    vi.mocked(deleteQuestion).mockResolvedValue(true);
+
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.handleDeleteQuestion('q1', 'w1');
+    });
+
+    await act(async () => {
+      await result.current.handleConfirmDeleteQuestion();
+    });
+
+    expect(deleteQuestion).toHaveBeenCalledWith('q1');
+    expect(result.current.pendingDeleteQuestion).toBeNull();
+  });
+
+  it('handleConfirmDeleteQuestion does nothing when no pending state', async () => {
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.handleConfirmDeleteQuestion();
+    });
+
+    expect(deleteQuestion).not.toHaveBeenCalled();
+  });
+});
+
+// ─── Quarter actions ─────────────────────────────────────────────────────────
+
+describe('usePowerPage — quarter actions', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(fetchUserWeeks).mockResolvedValue([]);
+    vi.mocked(fetchUserQuarters).mockResolvedValue([]);
+  });
+
+  it('handleSaveQuarter calls createQuarter when no quarterId provided', async () => {
+    vi.mocked(createQuarter).mockResolvedValue({
+      id: 'q1',
+      user_id: 'u1',
+      label: 'Q1',
+      created_at: '',
+      updated_at: '',
+    });
+
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.handleSaveQuarter('Q1');
+    });
+
+    expect(createQuarter).toHaveBeenCalledWith('Q1');
+  });
+
+  it('handleDeleteQuarter calls deleteQuarter', async () => {
+    vi.mocked(deleteQuarter).mockResolvedValue(true);
+
+    const { result } = renderHook(() => usePowerPage(onNavigate));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.handleDeleteQuarter('q1');
+    });
+
+    expect(deleteQuarter).toHaveBeenCalledWith('q1');
   });
 });

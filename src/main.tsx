@@ -4,14 +4,17 @@ import App from './App.tsx';
 import './index.css';
 import { registerServiceWorker } from './lib/serviceWorkerRegistration';
 import { ErrorBoundary, ToastContainer } from './components/ui';
+import { AuthProvider } from './contexts/AuthContext';
 
 registerServiceWorker();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ErrorBoundary>
-      <App />
-      <ToastContainer />
-    </ErrorBoundary>
+    <AuthProvider>
+      <ErrorBoundary>
+        <App />
+        <ToastContainer />
+      </ErrorBoundary>
+    </AuthProvider>
   </StrictMode>
 );

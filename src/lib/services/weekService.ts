@@ -5,11 +5,15 @@ import { supabase } from '../supabase';
 import type { ExerciseQuestion } from './questionService';
 import type { ExerciseAnswer } from './answerService';
 
+// The exercise_weeks.title column is reserved for future use and always stores
+// this fixed value. The DB has DEFAULT 'Exercise' — do not pass it in updates.
+const WEEK_TITLE = 'Exercise' as const;
+
 export interface ExerciseWeek {
   id: string;
   user_id: string;
   week_number: number;
-  title: string;
+  title?: string; // always 'Exercise'; optional because the app never reads it
   topic: string;
   quarter_id?: string | null;
   quarter_label?: string | null;
@@ -33,7 +37,7 @@ export async function fetchUserWeeks(): Promise<ExerciseWeek[]> {
 
   if (error) {
     console.error('Error fetching weeks:', error);
-    return [];
+    throw error;
   }
 
   type WeekWithJoin = ExerciseWeek & { exercise_quarters?: { label: string } | null };
@@ -103,7 +107,7 @@ export async function createWeek(
     .insert({
       user_id: user.id,
       week_number: weekNumber,
-      title: 'Exercise',
+      title: WEEK_TITLE,
       topic,
       quarter_id: quarterId ?? null,
     })
@@ -137,7 +141,7 @@ export async function moveWeekToQuarter(
 
 export async function updateWeek(
   weekId: string,
-  updates: { title?: string; topic?: string; week_number?: number; quarter_id?: string | null }
+  updates: { topic?: string; week_number?: number; quarter_id?: string | null }
 ): Promise<boolean> {
   const { error } = await supabase
     .from('exercise_weeks')

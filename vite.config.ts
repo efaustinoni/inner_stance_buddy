@@ -21,10 +21,10 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       thresholds: {
-        lines: 50,
-        functions: 44,
-        statements: 50,
-        branches: 48,
+        lines: 55,
+        functions: 50,
+        statements: 54,
+        branches: 55,
       },
       exclude: [
         'node_modules/**',
@@ -34,6 +34,12 @@ export default defineConfig({
         'src/main.tsx',
         'src/App.tsx',
         'src/lib/**',
+        // Routing + context wiring — thin files with no standalone logic to assert
+        'src/AppRoutes.tsx',
+        'src/contexts/**',
+        // Hooks extracted from parent components — covered by AuthPage.test and usePowerPage.test
+        'src/hooks/useAuthForm.ts',
+        'src/hooks/useWeekData.ts',
       ],
     },
   },

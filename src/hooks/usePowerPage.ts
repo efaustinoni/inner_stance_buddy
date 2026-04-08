@@ -1,50 +1,43 @@
 // Created: 2026-04-08
 // Hook: usePowerPage
-// Owns all state, data-loading, and action handlers for the Manage Weeks (Power) page.
+// Owns modal state and CRUD action handlers for the Manage Weeks page.
+// Data loading and expand-state are delegated to useWeekData.
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import { toast } from '../lib/toast';
-import {
-  fetchUserWeeks,
-  fetchWeekWithQuestions,
-  createWeek,
-  updateWeek,
-  deleteWeek,
-  type ExerciseWeek,
-  type WeekWithQuestions,
-} from '../lib/services/weekService';
-import {
-  fetchUserQuarters,
-  createQuarter,
-  updateQuarter,
-  deleteQuarter,
-  type ExerciseQuarter,
-} from '../lib/services/quarterService';
+import { createWeek, updateWeek, deleteWeek, type ExerciseWeek } from '../lib/services/weekService';
+import { createQuarter, updateQuarter, deleteQuarter } from '../lib/services/quarterService';
 import { addQuestion, deleteQuestion, bulkImportQuestions } from '../lib/services/questionService';
 import { saveAnswer, type Result } from '../lib/services/answerService';
-import {
-  createProgressTracker,
-  getTrackerForQuestion,
-  type ProgressTracker,
-} from '../lib/services/trackerService';
+import { createProgressTracker } from '../lib/services/trackerService';
 import { copyWeekToQuarter } from '../lib/services/orchestrators/copyWeekOrchestrator';
 import type { BulkImportData } from '../components/exercises';
+import { useWeekData } from './useWeekData';
 
 export function usePowerPage(onNavigate: (path: string) => void) {
-  const [weeks, setWeeks] = useState<ExerciseWeek[]>([]);
-  const [quarters, setQuarters] = useState<ExerciseQuarter[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const {
+    weeks,
+    quarters,
+    isLoading,
+    activeQuarterId,
+    filteredWeeks,
+    hasUnassigned,
+    expandedWeekIds,
+    weekDataMap,
+    loadingWeekIds,
+    trackersMap,
+    setExpandedWeekIds,
+    setWeekDataMap,
+    setTrackersMap,
+    setActiveQuarterId,
+    loadWeeks,
+    loadWeekData,
+    refreshWeekData,
+    toggleWeek,
+    collapseAll,
+  } = useWeekData();
 
-  // Quarter badge filter
-  const [activeQuarterId, setActiveQuarterId] = useState<string | 'unassigned' | null>(null);
-
-  // Collapsible week list state
-  const [expandedWeekIds, setExpandedWeekIds] = useState<Set<string>>(new Set());
-  const [weekDataMap, setWeekDataMap] = useState<Map<string, WeekWithQuestions>>(new Map());
-  const [loadingWeekIds, setLoadingWeekIds] = useState<Set<string>>(new Set());
-  const [trackersMap, setTrackersMap] = useState<Record<string, ProgressTracker | null>>({});
-
-  // Modals
+  // Modal state
   const [weekModalOpen, setWeekModalOpen] = useState(false);
   const [editingWeek, setEditingWeek] = useState<ExerciseWeek | null>(null);
   const [quarterModalOpen, setQuarterModalOpen] = useState(false);
@@ -53,84 +46,11 @@ export function usePowerPage(onNavigate: (path: string) => void) {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [bulkImportTargetWeekId, setBulkImportTargetWeekId] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadWeeks();
-  }, []);
-
-  // Reset expanded weeks when quarter filter changes
-  useEffect(() => {
-    setExpandedWeekIds(new Set());
-  }, [activeQuarterId]);
-
-  const filteredWeeks = useMemo(() => {
-    if (activeQuarterId === 'unassigned') return weeks.filter((w) => !w.quarter_id);
-    if (activeQuarterId) return weeks.filter((w) => w.quarter_id === activeQuarterId);
-    return weeks;
-  }, [weeks, activeQuarterId]);
-
-  async function loadWeeks() {
-    setIsLoading(true);
-    try {
-      const [data, quartersData] = await Promise.all([fetchUserWeeks(), fetchUserQuarters()]);
-      setWeeks(data);
-      setQuarters(quartersData);
-    } catch {
-      toast.error('Failed to load weeks. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
-  async function loadWeekData(wId: string) {
-    setLoadingWeekIds((prev) => new Set([...prev, wId]));
-    const data = await fetchWeekWithQuestions(wId);
-    if (data?.questions) {
-      const trackers: Record<string, ProgressTracker | null> = {};
-      await Promise.all(
-        data.questions.map(async (q) => {
-          trackers[q.id] = await getTrackerForQuestion(q.id);
-        })
-      );
-      setTrackersMap((prev) => ({ ...prev, ...trackers }));
-    }
-    if (data) setWeekDataMap((prev) => new Map([...prev, [wId, data]]));
-    setLoadingWeekIds((prev) => {
-      const s = new Set(prev);
-      s.delete(wId);
-      return s;
-    });
-  }
-
-  async function refreshWeekData(wId: string) {
-    const data = await fetchWeekWithQuestions(wId);
-    if (data?.questions) {
-      const trackers: Record<string, ProgressTracker | null> = {};
-      await Promise.all(
-        data.questions.map(async (q) => {
-          trackers[q.id] = await getTrackerForQuestion(q.id);
-        })
-      );
-      setTrackersMap((prev) => ({ ...prev, ...trackers }));
-    }
-    if (data) setWeekDataMap((prev) => new Map([...prev, [wId, data]]));
-  }
-
-  const toggleWeek = (wId: string) => {
-    setExpandedWeekIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(wId)) {
-        next.delete(wId);
-      } else {
-        next.add(wId);
-        if (!weekDataMap.has(wId) && !loadingWeekIds.has(wId)) {
-          loadWeekData(wId);
-        }
-      }
-      return next;
-    });
-  };
-
-  const collapseAll = () => setExpandedWeekIds(new Set());
+  // Pending question deletion — replaces confirm() with state-driven confirmation in the UI
+  const [pendingDeleteQuestion, setPendingDeleteQuestion] = useState<{
+    questionId: string;
+    weekId: string;
+  } | null>(null);
 
   const handleAddWeek = () => {
     setEditingWeek(null);
@@ -253,19 +173,27 @@ export function usePowerPage(onNavigate: (path: string) => void) {
     await refreshWeekData(questionTargetWeekId);
   };
 
-  const handleDeleteQuestion = async (questionId: string, wId: string) => {
-    if (!confirm('Remove this question?')) return;
+  // Sets pending state — UI is responsible for rendering a confirm dialog
+  const handleDeleteQuestion = (questionId: string, weekId: string) => {
+    setPendingDeleteQuestion({ questionId, weekId });
+  };
+
+  const handleConfirmDeleteQuestion = async () => {
+    if (!pendingDeleteQuestion) return;
+    const { questionId, weekId } = pendingDeleteQuestion;
+    setPendingDeleteQuestion(null);
     const ok = await deleteQuestion(questionId);
     if (!ok) {
       toast.error('Failed to delete question. Please try again.');
       return;
     }
-    await refreshWeekData(wId);
+    await refreshWeekData(weekId);
   };
+
+  const handleCancelDeleteQuestion = () => setPendingDeleteQuestion(null);
 
   const handleBulkImport = async (data: BulkImportData) => {
     let targetWeekId = bulkImportTargetWeekId;
-
     if (data.weekNumber) {
       const existingWeek = weeks.find((w) => w.week_number === data.weekNumber);
       if (existingWeek) {
@@ -280,7 +208,6 @@ export function usePowerPage(onNavigate: (path: string) => void) {
         await loadWeeks();
       }
     }
-
     if (!targetWeekId) return;
     const ok = await bulkImportQuestions(targetWeekId, data.questions);
     if (!ok) toast.error('Some questions could not be imported. Please check and try again.');
@@ -294,36 +221,29 @@ export function usePowerPage(onNavigate: (path: string) => void) {
   const handleStartTracking = async (questionId: string) => {
     const result = await createProgressTracker(questionId);
     if (!result.ok) {
-      if (result.error.code === 'auth') {
-        toast.error('Your session has expired. Please sign in again.');
-      } else {
-        toast.error('Failed to start progress tracker. Please try again.');
-      }
+      toast.error(
+        result.error.code === 'auth'
+          ? 'Your session has expired. Please sign in again.'
+          : 'Failed to start progress tracker. Please try again.'
+      );
       return;
     }
     setTrackersMap((prev) => ({ ...prev, [questionId]: result.data }));
     onNavigate(`/progress/${result.data.id}`);
   };
 
-  const hasUnassigned = weeks.some((w) => !w.quarter_id);
-
   return {
-    // data
     weeks,
     quarters,
     filteredWeeks,
     weekDataMap,
     trackersMap,
     hasUnassigned,
-    // loading
     isLoading,
     loadingWeekIds,
-    // expand state
     expandedWeekIds,
-    // filter
     activeQuarterId,
     setActiveQuarterId,
-    // week actions
     toggleWeek,
     collapseAll,
     handleAddWeek,
@@ -331,16 +251,16 @@ export function usePowerPage(onNavigate: (path: string) => void) {
     handleSaveWeek,
     handleDeleteWeek,
     handleCopyWeekToQuarter,
-    // quarter actions
     handleSaveQuarter,
     handleDeleteQuarter,
-    // question actions
     handleSaveQuestion,
     handleDeleteQuestion,
+    handleConfirmDeleteQuestion,
+    handleCancelDeleteQuestion,
     handleBulkImport,
     handleSaveAnswer,
     handleStartTracking,
-    // modal state
+    pendingDeleteQuestion,
     weekModalOpen,
     setWeekModalOpen,
     editingWeek,

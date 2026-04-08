@@ -19,7 +19,7 @@ export async function fetchUserQuarters(): Promise<ExerciseQuarter[]> {
 
   if (error) {
     console.error('Error fetching quarters:', error);
-    return [];
+    throw error;
   }
 
   return data || [];

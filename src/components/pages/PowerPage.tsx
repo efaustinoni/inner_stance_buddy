@@ -51,9 +51,12 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
     handleDeleteQuarter,
     handleSaveQuestion,
     handleDeleteQuestion,
+    handleConfirmDeleteQuestion,
+    handleCancelDeleteQuestion,
     handleBulkImport,
     handleSaveAnswer,
     handleStartTracking,
+    pendingDeleteQuestion,
     weekModalOpen,
     setWeekModalOpen,
     editingWeek,
@@ -334,6 +337,32 @@ export function PowerPage({ onNavigate }: PowerPageProps) {
         }}
         onImport={handleBulkImport}
       />
+
+      {/* Question delete confirmation */}
+      {pendingDeleteQuestion && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-navy-800 border border-navy-700 rounded-2xl p-6 max-w-sm w-full shadow-2xl space-y-4">
+            <p className="text-content-inverse font-medium">Remove this question?</p>
+            <p className="text-sm text-content-muted">
+              This will permanently delete the question and any saved answer.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={handleCancelDeleteQuestion}
+                className="px-4 py-2 text-sm text-content-muted hover:text-content-inverse bg-navy-700 hover:bg-navy-600 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmDeleteQuestion}
+                className="px-4 py-2 text-sm font-medium text-white bg-status-error hover:bg-status-error/80 rounded-lg transition-colors"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
