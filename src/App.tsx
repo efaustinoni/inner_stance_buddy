@@ -15,8 +15,14 @@ import { useAuth } from './hooks/useAuth';
 import { useLegalStatus } from './hooks/useLegalStatus';
 
 function App() {
-  const { user, isLoadingAuth, userName, isPasswordRecovery, setIsPasswordRecovery, handleSignOut } =
-    useAuth();
+  const {
+    user,
+    isLoadingAuth,
+    userName,
+    isPasswordRecovery,
+    setIsPasswordRecovery,
+    handleSignOut,
+  } = useAuth();
   const { legalManifest, acceptanceStatus, handleAcceptTerms } = useLegalStatus(user);
   const [location, setLocation] = useLocation();
 
@@ -69,12 +75,8 @@ function App() {
         <Route path="/forgot-password">
           <ForgotPasswordPage />
         </Route>
-        <Route path="/signin">
-          {user ? <Redirect to="/" /> : <AuthPage />}
-        </Route>
-        <Route path="/signup">
-          {user ? <Redirect to="/" /> : <AuthPage />}
-        </Route>
+        <Route path="/signin">{user ? <Redirect to="/" /> : <AuthPage />}</Route>
+        <Route path="/signup">{user ? <Redirect to="/" /> : <AuthPage />}</Route>
 
         {/* Redirect unauthenticated users away from all remaining routes */}
         {!user && (

@@ -110,5 +110,12 @@ export function useAuth(): AuthState {
     await supabase.auth.signOut();
   }
 
-  return { user, isLoadingAuth, userName, isPasswordRecovery, setIsPasswordRecovery, handleSignOut };
+  return {
+    user,
+    isLoadingAuth,
+    userName,
+    isPasswordRecovery,
+    setIsPasswordRecovery,
+    handleSignOut,
+  };
 }

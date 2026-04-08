@@ -26,7 +26,7 @@ describe('SimpleHeader', () => {
     } as never);
 
     render(<SimpleHeader />);
-    await waitFor(() => expect(screen.getByText('Your App Name')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Inner Stance Buddy')).toBeInTheDocument());
   });
 
   it('shows user display name in header', async () => {

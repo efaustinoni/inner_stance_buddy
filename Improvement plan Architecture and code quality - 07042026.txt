@@ -1,0 +1,31 @@
+Here’s a prioritized improvement list to move the application from B (78/100) toward an A, based on the review’s weakest and most heavily weighted areas: error handling, testing, architecture, and CI/CD.
+
+1. Add user-facing error handling
+Highest priority, because this directly affects trust, data integrity, and the lowest-scoring quality area. Right now errors are logged, but often silently swallowed, so users may not realize actions failed. Add proper error states, toast notifications, retry options, and error boundaries. This specifically addresses the report’s concerns around fetchDashboardData() and saveAnswer() failures.
+
+2. Add tests for the service layer
+Testing is currently one of the weakest dimensions, with the report noting that the core business logic in exerciseService.ts has no real unit tests. Start with the highest-risk flows: bulkImportQuestions, copyWeekToQuarter, fetchDashboardData, and save/update operations. Also set minimum coverage thresholds so quality doesn’t slip again.
+
+3. Split exerciseService.ts into domain modules
+This file is called out multiple times as oversized at 951 lines and functioning like a “god module.” Break it into focused modules such as quarterService.ts, weekService.ts, questionService.ts, trackerService.ts, and dashboardService.ts. This will improve architecture, reuse, readability, and testability at the same time.
+
+4. Introduce a proper router and reduce App.tsx complexity
+The review flags App.tsx as a monolithic router and state manager, with manual routing via window.location.pathname. Replacing this with a real router will improve modularity, enable route-level code splitting, and reduce coupling in the app shell.
+
+5. Set up CI/CD
+This is a fast win with strong impact. The report notes no GitHub Actions, no automated PR checks, and no deployment automation. Add a pipeline that runs lint, typecheck, test, and build on every pull request, then add dependency/security scanning after that.
+
+6. Improve performance by reducing sequential database calls
+The report points to multiple sequential Supabase operations where batching or parallelization would help, especially in fetchWeekWithQuestions, bulkImportQuestions, and copyWeekToQuarter. This won’t matter as much as reliability and architecture first, but it can help lift performance and scalability into A territory.
+
+7. Strengthen security details further
+Security already scores well, but there are still a few improvements that could help push it higher: restrict CORS instead of allowing *, add a Content Security Policy, and salt the hashed security answers. These are not the biggest blockers to an A overall, but they are worthwhile hardening steps.
+
+8. Clean up smaller maintainability issues
+These are lower priority, but still useful polish items: remove stale Poll* types, extract long subcomponents like QuestionCard, improve the README, add a CONTRIBUTING.md, and include an architecture diagram. These won’t move the grade as much alone, but together they support an A-level codebase.
+
+My recommendation for the fastest path to an A:
+
+Phase 1: error handling, service-layer tests, split exerciseService.ts
+Phase 2: proper router, CI/CD
+Phase 3: performance and security hardening, then docs cleanup

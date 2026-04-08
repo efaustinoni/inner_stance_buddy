@@ -24,6 +24,7 @@ See [`DEPLOYMENT_CHECKLIST.md`](DEPLOYMENT_CHECKLIST.md) for the full step-by-st
 Active improvements are tracked in `Archtecture and code improvements plan.txt` at the root of the repo. Completed phases are logged in [`CHANGELOG.md`](CHANGELOG.md) under `[Unreleased] > Changed`.
 
 Current phases:
+
 - **Phase 1** ✅ User-facing error handling (toast system, error boundary)
 - **Phase 2** ✅ Proper router (wouter) + App.tsx decomposition
 - **Phase 3** ✅ Performance optimizations, security hardening, docs cleanup
@@ -34,6 +35,7 @@ Current phases:
 ## Coding standards
 
 ### Commit messages
+
 Follow [Conventional Commits](https://www.conventionalcommits.org/). commitlint enforces this on every commit.
 
 ```
@@ -45,38 +47,44 @@ chore: tooling, deps, config
 ```
 
 Every commit made by Oz includes a co-author line:
+
 ```
 Co-Authored-By: Oz <oz-agent@warp.dev>
 ```
 
 ### Formatting
+
 Prettier is configured and runs automatically on pre-commit via Husky + lint-staged. You never need to run it manually.
 
 ### TypeScript
+
 - No `any` types.
 - All data shapes have explicit interfaces (see `src/lib/exerciseService.ts` for examples).
 - Components use named exports; pages use default exports only where required.
 
 ### File headers
+
 Every source file starts with a creation date and last-updated timestamp:
+
 ```typescript
 // Created: YYYY-MM-DD
 // Last Updated: YYYY-MM-DD (brief description of change)
 ```
 
 ### Error handling
+
 All Supabase calls check for errors and return `null`/`false`/`[]` on failure. User-facing failures surface via `toast.error(...)` from `src/lib/toast.ts`. See Phase 1 implementation for the pattern.
 
 ---
 
 ## Environment variables
 
-| Variable | Where set | Purpose |
-|---|---|---|
-| `VITE_SUPABASE_URL` | bolt.new environment | Supabase project URL |
-| `VITE_SUPABASE_ANON_KEY` | bolt.new environment | Supabase anonymous key |
-| `OPENAI_API_KEY` | Supabase Edge Function secrets | OpenAI vision API key |
-| `OPENAI_MODEL` | Supabase Edge Function secrets | Model name (default: `gpt-4o`) |
+| Variable                 | Where set                      | Purpose                        |
+| ------------------------ | ------------------------------ | ------------------------------ |
+| `VITE_SUPABASE_URL`      | bolt.new environment           | Supabase project URL           |
+| `VITE_SUPABASE_ANON_KEY` | bolt.new environment           | Supabase anonymous key         |
+| `OPENAI_API_KEY`         | Supabase Edge Function secrets | OpenAI vision API key          |
+| `OPENAI_MODEL`           | Supabase Edge Function secrets | Model name (default: `gpt-4o`) |
 
 > **Note:** bolt.new environment variables and Supabase Edge Function secrets are separate stores. Frontend env vars go in bolt.new; edge function secrets go in the Supabase dashboard under **Settings → Edge Functions → Secrets**.
 

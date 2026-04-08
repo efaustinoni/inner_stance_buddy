@@ -4,8 +4,8 @@
 export const appConfig = {
   versionLabel: 'v.1.5.0 Beta',
   branding: {
-    appName: 'Your App Name',
-    appInitials: 'YAN',
+    appName: 'Inner Stance Buddy',
+    appInitials: 'ISB',
     logoIconPath: '/icon-512.png',
     logoBackgroundColor: 'bg-blue-600',
     logoTextColor: 'text-white',

@@ -1,6 +1,6 @@
 # Frontend Documentation
 
-## 29 Components
+## 31 Components
 
 All React components live under `src/components/`. Subdirectories group related components by feature or layer.
 
@@ -173,10 +173,38 @@ Styled button with five variants (primary, secondary, dark, ghost, danger), thre
 `src/components/ui/Card.tsx`
 Container card with four variants (light, dark, glass, elevated), four padding options, and an optional hover-lift animation. Also exports `CardHeader`, `CardTitle`, `CardContent`, and `CardFooter` sub-components.
 
+#### ErrorBoundary
+
+`src/components/ui/ErrorBoundary.tsx`
+React error boundary component that catches unhandled render errors in its subtree and displays a fallback UI instead of crashing the whole page.
+
+#### Toast
+
+`src/components/ui/Toast.tsx`
+Toast notification renderer. Subscribes to the `src/lib/toast.ts` event bus and renders transient success/error/info messages in a fixed overlay. Consumed by the root app shell.
+
 ---
 
-## 0 Hooks
+## 4 Hooks
 
-This project has no custom React hooks in a dedicated `src/hooks/` directory. State management, data fetching, and side effects are handled inline within each component using React built-ins (`useState`, `useEffect`, `useMemo`, `useCallback`, `useRef`).
+Custom React hooks live in `src/hooks/`. Each hook owns a specific slice of state and logic, keeping page components focused purely on rendering.
 
-When a custom hook is extracted to a `src/hooks/` file, add it to this section and remove it from `scripts/.test-exceptions` so the test-audit enforces a corresponding test file.
+#### useAuth
+
+`src/hooks/useAuth.ts`
+Manages the global authentication state. Loads the current user on mount via `supabase.auth.getUser`, subscribes to `onAuthStateChange` for live updates, auto-fills the user's timezone if still set to UTC, and exposes `handleSignOut`. Returned by the root app shell and passed down as props.
+
+#### useDashboard
+
+`src/hooks/useDashboard.ts`
+Owns all state and logic for `DashboardPage`. Loads weeks, questions, answers, and tracker data via `fetchDashboardData`. Exposes filter state (selectedWeek, selectedQuarter, filterMode, searchQuery), derived values (filteredQuestions, stats, groupedByQuarterAndWeek), collapse state, and all action handlers. Extracted in ITEM-03.
+
+#### useLegalStatus
+
+`src/hooks/useLegalStatus.ts`
+Manages legal acceptance state for the current user. Fetches the active legal manifest and checks whether the user has accepted the current terms/privacy versions. Exposes `handleAcceptTerms` which calls `recordUserAgreement` (authenticated) or `setLocalAcceptance` (guest).
+
+#### usePowerPage
+
+`src/hooks/usePowerPage.ts`
+Owns all state and logic for `PowerPage` (Manage Weeks). Handles loading weeks and quarters, expanding/collapsing week rows, all modal open/close state, and every CRUD handler for weeks, quarters, questions, answers, and progress trackers. Extracted in ITEM-04.

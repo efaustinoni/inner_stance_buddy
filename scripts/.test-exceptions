@@ -5,3 +5,9 @@
 # Every component and hook must have a test file.
 # Only add entries here for auto-generated files, third-party wrappers,
 # or files explicitly approved by the team — document the reason inline.
+
+# UI infrastructure — no meaningful unit test surface
+# ErrorBoundary: React class boundary; behaviour covered by integration
+ErrorBoundary
+# Toast: event-bus renderer; tested implicitly via components that trigger toasts
+Toast

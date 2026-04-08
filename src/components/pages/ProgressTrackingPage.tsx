@@ -82,20 +82,27 @@ export function ProgressTrackingPage({ trackerId, onNavigate }: ProgressTracking
 
   const loadTracker = async () => {
     setLoading(true);
-    const data = await fetchTrackerWithCheckIns(trackerId);
-    setTracker(data);
-    if (data) {
-      const doneMap: Record<string, boolean> = {};
-      const notes: Record<string, string> = {};
-      data.check_ins.forEach((ci: ProgressCheckIn) => {
-        doneMap[ci.check_in_date] = ci.is_done;
-        notes[ci.check_in_date] = ci.notes || '';
-      });
-      setCheckInsMap(doneMap);
-      setNotesMap(notes);
-      setEditingNotes(notes);
+    try {
+      const data = await fetchTrackerWithCheckIns(trackerId);
+      setTracker(data);
+      if (data) {
+        const doneMap: Record<string, boolean> = {};
+        const notes: Record<string, string> = {};
+        data.check_ins.forEach((ci: ProgressCheckIn) => {
+          doneMap[ci.check_in_date] = ci.is_done;
+          notes[ci.check_in_date] = ci.notes || '';
+        });
+        setCheckInsMap(doneMap);
+        setNotesMap(notes);
+        setEditingNotes(notes);
+      } else {
+        toast.error('Could not load tracker data. Please try again.');
+      }
+    } catch {
+      toast.error('Could not load tracker data. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const toggleExpanded = useCallback((dateStr: string) => {

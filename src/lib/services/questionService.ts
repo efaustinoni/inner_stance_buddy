@@ -1,0 +1,248 @@
+// Created: 2026-04-08
+// Domain: Questions
+
+import { supabase } from '../supabase';
+
+export interface ExerciseQuestion {
+  id: string;
+  week_id: string;
+  question_label: string;
+  question_text: string;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ImageExtractedData {
+  weekNumber?: number;
+  theme?: string;
+  questions: { label: string; text: string; answer?: string }[];
+}
+
+export async function addQuestion(
+  weekId: string,
+  questionLabel: string,
+  questionText: string,
+  sortOrder: number
+): Promise<ExerciseQuestion | null> {
+  const { data, error } = await supabase
+    .from('exercise_questions')
+    .insert({
+      week_id: weekId,
+      question_label: questionLabel,
+      question_text: questionText,
+      sort_order: sortOrder,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error adding question:', error);
+    return null;
+  }
+
+  return data;
+}
+
+export async function updateQuestion(
+  questionId: string,
+  updates: { question_label?: string; question_text?: string; sort_order?: number }
+): Promise<boolean> {
+  const { error } = await supabase
+    .from('exercise_questions')
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq('id', questionId);
+
+  if (error) {
+    console.error('Error updating question:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function deleteQuestion(questionId: string): Promise<boolean> {
+  const { error } = await supabase.from('exercise_questions').delete().eq('id', questionId);
+
+  if (error) {
+    console.error('Error deleting question:', error);
+    return false;
+  }
+
+  return true;
+}
+
+export async function bulkImportQuestions(
+  weekId: string,
+  questions: { label: string; text: string; answer?: string }[],
+  replaceExisting: boolean = true
+): Promise<boolean> {
+  console.log(
+    '[BulkImport] Received questions:',
+    JSON.stringify(
+      questions.map((q) => ({
+        label: q.label,
+        text: q.text?.substring(0, 30),
+        hasAnswer: !!q.answer,
+        answerPreview: q.answer?.substring(0, 30),
+      })),
+      null,
+      2
+    )
+  );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  if (replaceExisting) {
+    const { data: existingQuestions } = await supabase
+      .from('exercise_questions')
+      .select('id')
+      .eq('week_id', weekId);
+
+    if (existingQuestions && existingQuestions.length > 0) {
+      const questionIds = existingQuestions.map((q) => q.id);
+
+      await supabase.from('exercise_answers').delete().in('question_id', questionIds);
+
+      await supabase
+        .from('progress_check_ins')
+        .delete()
+        .in(
+          'tracker_id',
+          (
+            await supabase.from('progress_trackers').select('id').in('question_id', questionIds)
+          ).data?.map((t) => t.id) || []
+        );
+
+      await supabase.from('progress_trackers').delete().in('question_id', questionIds);
+
+      await supabase.from('exercise_questions').delete().eq('week_id', weekId);
+
+      console.log(`[BulkImport] Deleted ${existingQuestions.length} existing questions for week`);
+    }
+  }
+
+  // Insert questions one by one to guarantee order and get reliable IDs
+  const insertedQuestions: ExerciseQuestion[] = [];
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+    const { data: inserted, error: qError } = await supabase
+      .from('exercise_questions')
+      .insert({
+        week_id: weekId,
+        question_label: q.label,
+        question_text: q.text,
+        sort_order: i,
+      })
+      .select()
+      .single();
+
+    if (qError || !inserted) {
+      console.error(`[BulkImport] Error inserting question ${i + 1}:`, qError);
+      return false;
+    }
+    insertedQuestions.push(inserted);
+  }
+
+  console.log(`[BulkImport] Inserted ${insertedQuestions.length} questions`);
+
+  const answersToInsert = questions
+    .map((q, index) => {
+      if (!q.answer) return null;
+      const insertedQuestion = insertedQuestions[index];
+      if (!insertedQuestion) return null;
+      return {
+        question_id: insertedQuestion.id,
+        user_id: user.id,
+        answer_text: q.answer,
+      };
+    })
+    .filter((a): a is { question_id: string; user_id: string; answer_text: string } => a !== null);
+
+  if (answersToInsert.length > 0) {
+    const { error: answerError } = await supabase.from('exercise_answers').insert(answersToInsert);
+
+    if (answerError) {
+      console.error('[BulkImport] Error inserting answers:', answerError);
+      return false;
+    }
+    console.log(`[BulkImport] Inserted ${answersToInsert.length} answers`);
+  } else {
+    console.log('[BulkImport] No answers to insert');
+  }
+
+  return true;
+}
+
+/**
+ * Calls the `extract-questions-from-image` Supabase Edge Function.
+ * The function uses the OPENAI_API_KEY + OPENAI_MODEL secrets to extract
+ * questions (and optionally answers) from the provided image.
+ *
+ * @param imageBase64 - Base64-encoded image data (without the data-URL prefix)
+ * @param mimeType   - MIME type of the image, e.g. "image/jpeg" or "image/png"
+ */
+export async function extractQuestionsFromImage(
+  imageBase64: string,
+  mimeType: string
+): Promise<ImageExtractedData | null> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  if (!session) {
+    console.error('[extractQuestionsFromImage] No active session');
+    return null;
+  }
+
+  const functionUrl = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/extract-questions-from-image`;
+  let response: Response;
+  try {
+    response = await fetch(functionUrl, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${session.access_token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ imageBase64, mimeType }),
+    });
+  } catch (fetchError) {
+    console.error('[extractQuestionsFromImage] Network error:', fetchError);
+    return null;
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`[extractQuestionsFromImage] HTTP ${response.status}:`, errorText);
+    return null;
+  }
+
+  const data = await response.json();
+
+  if (!data || !Array.isArray(data.questions)) {
+    console.error('[extractQuestionsFromImage] Unexpected response shape:', data);
+    return null;
+  }
+
+  type RawQuestion = { label: string; text: string; answer?: string | null };
+  const questions = data.questions.map((q: RawQuestion) => ({
+    label: q.label || 'Vraag',
+    text: q.text || '',
+    // Answers returned from the Edge Function already use | as line separator;
+    // convert them to newlines so they match the app's internal format.
+    answer: q.answer
+      ? String(q.answer)
+          .split('|')
+          .map((a: string) => a.trim())
+          .join('\n')
+      : undefined,
+  }));
+
+  return {
+    weekNumber: data.weekNumber ?? undefined,
+    theme: data.theme ?? undefined,
+    questions,
+  };
+}

@@ -4,13 +4,13 @@ A personal coaching exercise journal — a Progressive Web App (PWA) for trackin
 
 ## Stack
 
-| Layer | Technology |
-|---|---|
-| Frontend | React 18 + TypeScript + Vite + Tailwind CSS |
-| Backend | Supabase (Postgres + Auth + Edge Functions + RLS) |
-| Deployment | bolt.new → Netlify (frontend) + Supabase (backend) |
-| Router | wouter |
-| PWA | Service worker with network-first HTML, cache-first assets |
+| Layer      | Technology                                                 |
+| ---------- | ---------------------------------------------------------- |
+| Frontend   | React 18 + TypeScript + Vite + Tailwind CSS                |
+| Backend    | Supabase (Postgres + Auth + Edge Functions + RLS)          |
+| Deployment | bolt.new → Netlify (frontend) + Supabase (backend)         |
+| Router     | wouter                                                     |
+| PWA        | Service worker with network-first HTML, cache-first assets |
 
 ## Deployment
 
@@ -24,15 +24,15 @@ See [`docs/DEPLOYMENT_CHECKLIST.md`](docs/DEPLOYMENT_CHECKLIST.md) for the full 
 
 ## Documentation
 
-| Document | Description |
-|---|---|
-| [`docs/FRONTEND.md`](docs/FRONTEND.md) | Frontend architecture, component structure, routing |
-| [`docs/BACKEND.md`](docs/BACKEND.md) | Database schema, RLS policies, Edge Functions |
-| [`docs/DEPLOYMENT_CHECKLIST.md`](docs/DEPLOYMENT_CHECKLIST.md) | Step-by-step deploy guide for all change types |
-| [`docs/SECURITY_CONFIGURATION.md`](docs/SECURITY_CONFIGURATION.md) | Encryption, hashed answers, security headers |
-| [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | Full history of all changes |
-| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md) | End-user guide including privacy and encryption |
-| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md) | How to contribute and work with Oz |
+| Document                                                           | Description                                         |
+| ------------------------------------------------------------------ | --------------------------------------------------- |
+| [`docs/FRONTEND.md`](docs/FRONTEND.md)                             | Frontend architecture, component structure, routing |
+| [`docs/BACKEND.md`](docs/BACKEND.md)                               | Database schema, RLS policies, Edge Functions       |
+| [`docs/DEPLOYMENT_CHECKLIST.md`](docs/DEPLOYMENT_CHECKLIST.md)     | Step-by-step deploy guide for all change types      |
+| [`docs/SECURITY_CONFIGURATION.md`](docs/SECURITY_CONFIGURATION.md) | Encryption, hashed answers, security headers        |
+| [`docs/CHANGELOG.md`](docs/CHANGELOG.md)                           | Full history of all changes                         |
+| [`docs/USER_GUIDE.md`](docs/USER_GUIDE.md)                         | End-user guide including privacy and encryption     |
+| [`docs/CONTRIBUTING.md`](docs/CONTRIBUTING.md)                     | How to contribute and work with Oz                  |
 
 ## Local Development
 
