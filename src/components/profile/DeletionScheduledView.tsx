@@ -33,10 +33,6 @@ export default function DeletionScheduledView({
           </p>
           <p className="flex items-start gap-2">
             <span className="text-orange-600 mt-0.5">•</span>
-            <span>All your polls and data will be permanently deleted on the date shown above</span>
-          </p>
-          <p className="flex items-start gap-2">
-            <span className="text-orange-600 mt-0.5">•</span>
             <span>This action cannot be undone after the hard delete</span>
           </p>
         </div>

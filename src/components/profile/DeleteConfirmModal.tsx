@@ -61,12 +61,6 @@ export default function DeleteConfirmModal({
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-orange-600 mt-0.5">•</span>
-                  <span>
-                    All polls and related data (time slots, responses, votes) will be deleted
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-orange-600 mt-0.5">•</span>
                   <span>This action cannot be undone after hard delete</span>
                 </li>
               </ul>

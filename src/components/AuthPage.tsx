@@ -191,7 +191,7 @@ export default function AuthPage() {
                   value={timezone}
                   onChange={setTimezone}
                   label="Your Location / Timezone"
-                  helperText="This will be your default timezone when creating polls"
+                  helperText="Used to display times correctly throughout the app"
                 />
               </>
             )}

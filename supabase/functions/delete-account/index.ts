@@ -102,7 +102,6 @@ Deno.serve(async (req: Request) => {
       display_name: profile?.display_name,
       deleted_at: now,
       purge_reason: 'ACCOUNT_DELETION_15D',
-      polls_deleted_count: 0,
       success: true,
     });
 
